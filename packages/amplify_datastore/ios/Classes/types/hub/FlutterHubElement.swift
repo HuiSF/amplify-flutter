@@ -46,6 +46,39 @@ public struct FlutterHubElement {
         self.lastChangedAt = hubElement.lastChangedAt
         self.deleted = hubElement.deleted
     }
+
+    init(
+        hubElement: MutationEvent,
+        modelSchemaRegistry: FlutterSchemaRegistry,
+        customTypeSchemaRegistry: FlutterSchemaRegistry,
+        modelName: String
+    ) throws {
+        do {
+            let decodedModel = try ModelRegistry.decode(modelName: modelName, from: hubElement.json) as! FlutterSerializedModel
+            model = try decodedModel.toMap(
+                modelSchemaRegistry: modelSchemaRegistry,
+                customTypeSchemaRegistry: customTypeSchemaRegistry,
+                modelName: modelName
+            )
+            self.version = hubElement.version
+            let serializedData = model["serializedData"] as! [String: Any]
+            if let value = serializedData["_deleted"] as? Bool {
+                self.deleted = value
+            } else if serializedData["_deleted"] == nil {
+                self.deleted = false
+            }
+            if let value = serializedData["_lastChangedAt"] as? Double {
+                self.lastChangedAt = Int(value)
+            } else if let value = serializedData["_lastChangedAt"] as? String {
+                self.lastChangedAt = Int(value)
+            } else if let value = serializedData["_lastChangedAt"] as? Int {
+                self.lastChangedAt = value
+            }
+        }
+        catch {
+            throw FlutterDataStoreError.hubEventCast
+        }
+    }
     
     func toValueMap() -> Dictionary<String, Any> {
         return [

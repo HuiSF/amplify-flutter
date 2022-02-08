@@ -20,7 +20,7 @@ import 'package:amplify_datastore_plugin_interface/amplify_datastore_plugin_inte
 import 'package:flutter/services.dart';
 
 EventChannel channel =
-    const EventChannel("com.amazonaws.amplify/datastore_hub_events");
+    const EventChannel('com.amazonaws.amplify/datastore_hub_events');
 late ModelProviderInterface modelProvider;
 StreamSubscription? eventStream;
 
@@ -43,58 +43,73 @@ StreamController<DataStoreHubEvent> _controller =
 _onListen() {
   if (eventStream == null) {
     eventStream = channel.receiveBroadcastStream(1).listen((event) {
-      switch (event["eventName"]) {
-        case "ready":
+      switch (event['eventName']) {
+        case 'ready':
           {
-            _rebroadcast(event["eventName"]);
+            _rebroadcast(event['eventName']);
           }
           break;
-        case "networkStatus":
+        case 'networkStatus':
           {
-            _rebroadcast(event["eventName"],
+            _rebroadcast(event['eventName'],
                 payload: NetworkStatusEvent(event));
           }
           break;
         case 'subscriptionsEstablished':
           {
-            _rebroadcast(event["eventName"]);
+            _rebroadcast(event['eventName']);
           }
           break;
-        case "syncQueriesStarted":
+        case 'syncQueriesStarted':
           {
-            _rebroadcast(event["eventName"],
+            _rebroadcast(event['eventName'],
                 payload: SyncQueriesStartedEvent(event));
           }
           break;
-        case "modelSynced":
+        case 'modelSynced':
           {
-            _rebroadcast(event["eventName"], payload: ModelSyncedEvent(event));
+            _rebroadcast(event['eventName'], payload: ModelSyncedEvent(event));
           }
           break;
-        case "syncQueriesReady":
+        case 'syncQueriesReady':
           {
-            _rebroadcast(event["eventName"]);
+            _rebroadcast(event['eventName']);
           }
           break;
-        case "outboxMutationEnqueued":
+        case 'outboxMutationEnqueued':
           {
-            _rebroadcast(event["eventName"],
+            _rebroadcast(event['eventName'],
                 payload: OutboxMutationEvent(
-                    event, modelProvider, event["eventName"]));
+                    event, modelProvider, event['eventName']));
           }
           break;
-        case "outboxMutationProcessed":
+        case 'outboxMutationProcessed':
           {
-            _rebroadcast(event["eventName"],
+            _rebroadcast(event['eventName'],
                 payload: OutboxMutationEvent(
-                    event, modelProvider, event["eventName"]));
+                    event, modelProvider, event['eventName']));
           }
           break;
-        case "outboxStatus":
+        case 'outboxStatus':
           {
-            _rebroadcast(event["eventName"], payload: OutboxStatusEvent(event));
+            _rebroadcast(event['eventName'], payload: OutboxStatusEvent(event));
           }
           break;
+        // event name in amplify-android
+        case 'subscriptionDataProcessed':
+        // event name in amplify-ios
+        case 'syncReceived':
+          {
+            _rebroadcast(
+              'subscriptionDataProcessed',
+              payload: SubscriptionDataProcessed(
+                event,
+                modelProvider,
+                'subscriptionDataProcessed',
+              ),
+            );
+            break;
+          }
         default:
           break;
       }
