@@ -29,3 +29,14 @@ else
         -d iPhone \
         $TARGET
 fi
+
+TEST_ENTRIES=`ls integration_test/separate_integration_tests/*.dart`
+for ENTRY in $TEST_ENTRIES
+do
+    echo "Run $ENTRY WITH API Sync"
+    flutter test \
+        --no-pub \
+        --dart-define ENABLE_CLOUD_SYNC=true \
+        -d iPhone \
+        $ENTRY
+done
