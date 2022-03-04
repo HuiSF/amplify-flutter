@@ -18,6 +18,23 @@ import 'package:amplify_api/src/graphql/graphql_request_factory.dart';
 import 'package:amplify_api/src/graphql/paginated_model_type_impl.dart';
 import 'package:amplify_core/amplify_core.dart';
 
+class _DummyModelIdentifier implements ModelIdentifier {
+  final List<Map<String, dynamic>> emptyList = const [];
+  final Map<String, dynamic> emptyMap = const <String, dynamic>{};
+  final String emptyString = '';
+
+  const _DummyModelIdentifier();
+
+  @override
+  List<Map<String, dynamic>> serializeAsList() => emptyList;
+
+  @override
+  Map<String, dynamic> serializeAsMap() => emptyMap;
+
+  @override
+  String serializeAsString() => emptyString;
+}
+
 class PaginatedResultImpl<T extends Model> extends PaginatedResult<T> {
   const PaginatedResultImpl(List<T?> items, int? limit, String? nextToken,
       Map<String, dynamic>? filter)
@@ -26,6 +43,11 @@ class PaginatedResultImpl<T extends Model> extends PaginatedResult<T> {
   @override
   String getId() {
     return '';
+  }
+
+  @override
+  ModelIdentifier get modelIdentifier {
+    return const _DummyModelIdentifier();
   }
 
   @override
