@@ -43,56 +43,53 @@ StreamController<DataStoreHubEvent> _controller =
 _onListen() {
   if (eventStream == null) {
     eventStream = channel.receiveBroadcastStream(1).listen((event) {
-      switch (event['eventName']) {
+      final eventName = event['eventName'];
+      switch (eventName) {
         case 'ready':
           {
-            _rebroadcast(event['eventName']);
+            _rebroadcast(eventName);
           }
           break;
         case 'networkStatus':
           {
-            _rebroadcast(event['eventName'],
-                payload: NetworkStatusEvent(event));
+            _rebroadcast(eventName, payload: NetworkStatusEvent(event));
           }
           break;
         case 'subscriptionsEstablished':
           {
-            _rebroadcast(event['eventName']);
+            _rebroadcast(eventName);
           }
           break;
         case 'syncQueriesStarted':
           {
-            _rebroadcast(event['eventName'],
-                payload: SyncQueriesStartedEvent(event));
+            _rebroadcast(eventName, payload: SyncQueriesStartedEvent(event));
           }
           break;
         case 'modelSynced':
           {
-            _rebroadcast(event['eventName'], payload: ModelSyncedEvent(event));
+            _rebroadcast(eventName, payload: ModelSyncedEvent(event));
           }
           break;
         case 'syncQueriesReady':
           {
-            _rebroadcast(event['eventName']);
+            _rebroadcast(eventName);
           }
           break;
         case 'outboxMutationEnqueued':
           {
-            _rebroadcast(event['eventName'],
-                payload: OutboxMutationEvent(
-                    event, modelProvider, event['eventName']));
+            _rebroadcast(eventName,
+                payload: OutboxMutationEvent(event, modelProvider, eventName));
           }
           break;
         case 'outboxMutationProcessed':
           {
-            _rebroadcast(event['eventName'],
-                payload: OutboxMutationEvent(
-                    event, modelProvider, event['eventName']));
+            _rebroadcast(eventName,
+                payload: OutboxMutationEvent(event, modelProvider, eventName));
           }
           break;
         case 'outboxStatus':
           {
-            _rebroadcast(event['eventName'], payload: OutboxStatusEvent(event));
+            _rebroadcast(eventName, payload: OutboxStatusEvent(event));
           }
           break;
         // event name in amplify-android
