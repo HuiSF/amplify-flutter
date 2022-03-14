@@ -15,7 +15,6 @@
 
 import 'dart:async';
 
-import 'package:amplify_datastore_plugin_interface/amplify_datastore_plugin_interface.dart';
 import 'package:amplify_datastore/amplify_datastore.dart';
 import 'package:amplify_api/amplify_api.dart';
 import 'package:amplify_datastore_example/amplifyconfiguration.dart';
@@ -24,6 +23,9 @@ import 'package:amplify_flutter/amplify_flutter.dart';
 
 const ENABLE_CLOUD_SYNC =
     bool.fromEnvironment('ENABLE_CLOUD_SYNC', defaultValue: false);
+const DATASTORE_READY_EVENT_TIMEOUT = const Duration(minutes: 2);
+const DELAY_TO_START_DATASTORE = const Duration(milliseconds: 500);
+const DELAY_TO_CLEAR_DATASTORE = const Duration(seconds: 2);
 
 /// Configure [AmplifyDataStore] plugin with given [modelProvider].
 /// When [ENABLE_CLOUD_SYNC] environment variable is set to true, it also
@@ -56,7 +58,7 @@ Future<void> configureDataStore({
 ///
 /// see: https:///github.com/aws-amplify/amplify-android/issues/1464
 Future<void> clearDataStore() async {
-  await Future.delayed(Duration(seconds: 2));
+  await Future.delayed(DELAY_TO_CLEAR_DATASTORE);
   await Amplify.DataStore.clear();
 }
 
@@ -77,23 +79,16 @@ class DataStoreStarter {
         _completer.complete();
       }
     });
-    startTimeout();
-    await Amplify.DataStore.start();
-    return _completer.future;
-  }
 
-  startTimeout() async {
-    await Future.delayed(Duration(minutes: 2));
-
-    if (!_completer.isCompleted) {
-      _completer
-          .completeError('Timed out before DataStore gets ready to run tests.');
-    }
+    // we are not waiting for DataStore.start to complete
+    // but an asynchronous DataStore ready event dispatched via the hub
+    Amplify.DataStore.start();
+    return _completer.future.timeout(DATASTORE_READY_EVENT_TIMEOUT);
   }
 }
 
 Future<void> startDataStore() async {
-  await Future.delayed(Duration(milliseconds: 500));
+  await Future.delayed(DELAY_TO_START_DATASTORE);
   await DataStoreStarter().startDataStore();
 }
 

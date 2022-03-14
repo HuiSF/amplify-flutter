@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:amplify_datastore_plugin_interface/amplify_datastore_plugin_interface.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
 
+const DEFAULT_TIMEOUT = const Duration(seconds: 20);
+
 class WaitForExpectedEventFromHub<T extends HubEventPayload> {
   final Completer<T> _completer = Completer();
   late StreamSubscription hubSubscription;
@@ -13,7 +15,7 @@ class WaitForExpectedEventFromHub<T extends HubEventPayload> {
   WaitForExpectedEventFromHub({
     required this.eventMatcher,
     required this.eventName,
-    Duration timeout = const Duration(seconds: 20),
+    Duration timeout = DEFAULT_TIMEOUT,
   }) : this.timeout = timeout;
 
   Future<T> start() {
@@ -25,16 +27,8 @@ class WaitForExpectedEventFromHub<T extends HubEventPayload> {
         }
       }
     });
-    startTimeout();
-    return _completer.future;
-  }
 
-  startTimeout() async {
-    await Future.delayed(timeout);
-    if (!_completer.isCompleted) {
-      _completer
-          .completeError('Timed out before getting expected event from hub!');
-    }
+    return _completer.future.timeout(timeout);
   }
 }
 
