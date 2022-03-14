@@ -1,3 +1,17 @@
+## 0.4.1 (2022-02-28)
+
+- fix: Implement Result in AtomicResult (#1393)
+- fix: android atomic result (#1376)
+
+## 0.4.0 (2022-02-17)
+
+- chore: Many model-related type definitions moved from amplify_datastore_plugin_interface to amplify_core.
+- chore: bump Kotlin version to 1.6.10 (#1346)
+
+### Breaking Changes
+
+- If your app has a dependency on Kotlin, the value of `ext.kotlin_version` set in `android/build.gradle` must be 1.5.31 or greater (1.6.10 recommended)
+
 ## 0.3.2 (2022-01-21)
 
 - chore: bump amplify-android to 1.31.2

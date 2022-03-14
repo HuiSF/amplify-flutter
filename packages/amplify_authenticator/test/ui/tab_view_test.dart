@@ -1,13 +1,14 @@
 import 'dart:convert';
 
 import 'package:amplify_authenticator/amplify_authenticator.dart';
+import 'package:amplify_authenticator/src/blocs/auth/auth_bloc.dart';
 import 'package:amplify_authenticator/src/l10n/authenticator_localizations.dart';
 import 'package:amplify_authenticator/src/screens/authenticator_screen.dart';
+import 'package:amplify_authenticator/src/state/auth_state.dart';
 import 'package:amplify_authenticator/src/state/inherited_authenticator_state.dart';
 import 'package:amplify_authenticator/src/state/inherited_config.dart';
 import 'package:amplify_authenticator/src/state/inherited_forms.dart';
 import 'package:amplify_authenticator/src/state/inherited_strings.dart';
-import 'package:amplify_authenticator/src/theme/amplify_theme.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -32,12 +33,11 @@ void main() {
   Widget buildTabView({
     ThemeData? lightTheme,
     ThemeData? darkTheme,
-    bool useAmplifyTheme = false,
     String? amplifyConfig,
   }) {
     return MaterialApp(
-      theme: useAmplifyTheme ? AmplifyTheme.light : lightTheme,
-      darkTheme: useAmplifyTheme ? AmplifyTheme.dark : darkTheme,
+      theme: lightTheme,
+      darkTheme: darkTheme,
       themeMode: ThemeMode.system,
       localizationsDelegates: AuthenticatorLocalizations.localizationsDelegates,
       home: Scaffold(
@@ -45,7 +45,6 @@ void main() {
           amplifyConfig: amplifyConfig == null
               ? null
               : AmplifyConfig.fromJson(jsonDecode(amplifyConfig)),
-          useAmplifyTheme: useAmplifyTheme,
           padding: const EdgeInsets.all(32),
           child: InheritedAuthenticatorState(
             state: AuthenticatorState(MockBloc()),
@@ -79,7 +78,6 @@ void main() {
   Widget defaultMaterial(String config) => buildTabView(
         lightTheme: ThemeData.light(),
         darkTheme: ThemeData.dark(),
-        useAmplifyTheme: false,
         amplifyConfig: config,
       );
 
@@ -91,7 +89,6 @@ void main() {
         darkTheme: ThemeData.from(
           colorScheme: const ColorScheme.highContrastDark(),
         ),
-        useAmplifyTheme: false,
         amplifyConfig: config,
       );
 
@@ -112,7 +109,6 @@ void main() {
             brightness: Brightness.dark,
           ),
         ),
-        useAmplifyTheme: false,
         amplifyConfig: config,
       );
 
@@ -130,13 +126,6 @@ void main() {
           ),
           indicatorColor: Colors.pink,
         ),
-        useAmplifyTheme: false,
-        amplifyConfig: config,
-      );
-
-  // The Amplify theme.
-  Widget amplify(String config) => buildTabView(
-        useAmplifyTheme: true,
         amplifyConfig: config,
       );
 
@@ -198,17 +187,6 @@ void main() {
               'tab_view_${configName}_config_light_override.png',
             );
           });
-
-          // Tests the Amplify theme.
-          testWidgets('(amplify)', (WidgetTester tester) async {
-            await tester.pumpWidget(amplify(amplifyconfig));
-            await tester.pumpAndSettle();
-
-            await expectGoldenMatches(
-              tabViewFinder,
-              'tab_view_${configName}_config_light_amplify.png',
-            );
-          });
         });
 
         group('Dark Mode', () {
@@ -257,17 +235,6 @@ void main() {
             await expectGoldenMatches(
               tabViewFinder,
               'tab_view_${configName}_config_dark_override.png',
-            );
-          });
-
-          // Tests the Amplify theme (dark mode).
-          testWidgets('(amplify)', (WidgetTester tester) async {
-            await tester.pumpWidget(amplify(amplifyconfig));
-            await tester.pumpAndSettle();
-
-            await expectGoldenMatches(
-              tabViewFinder,
-              'tab_view_${configName}_config_dark_amplify.png',
             );
           });
         });

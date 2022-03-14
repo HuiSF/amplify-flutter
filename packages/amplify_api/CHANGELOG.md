@@ -1,3 +1,17 @@
+## 0.4.1 (2022-02-28)
+
+- chore: clean up some code to limit analysis infos (#1404)
+
+## 0.4.0 (2022-02-17)
+
+- chore: bump Kotlin version to 1.6.10 (#1346)
+- feat(amplify_api): model-based Graphql helpers (#1211)
+
+### Breaking Changes
+
+- The `data` field is now nullable in `GraphQLResponse`.
+- If your app has a dependency on Kotlin, the value of `ext.kotlin_version` set in `android/build.gradle` must be 1.5.31 or greater (1.6.10 recommended)
+
 ## 0.3.2 (2022-01-21)
 
 - chore: bump amplify-android to 1.31.2

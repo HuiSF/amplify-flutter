@@ -26,11 +26,10 @@ class AuthenticatorPhoneField<FieldType> extends AuthenticatorFormField<
     this.enabled,
     this.initialValue,
     this.errorMaxLines,
-    required bool useAmplifyTheme,
   }) : super._(
           key: key,
           field: field,
-          titleKey: useAmplifyTheme ? null : InputResolverKey.phoneNumberTitle,
+          titleKey: InputResolverKey.phoneNumberTitle,
           hintTextKey: InputResolverKey.phoneNumberHint,
           requiredOverride: requiredOverride,
         );
@@ -112,14 +111,5 @@ class _AuthenticatorPhoneFieldState<FieldType>
         .add(IterableProperty<Country>('filteredCountries', filteredCountries));
     properties.add(
         ObjectFlagProperty<ValueChanged<String>>.has('onChanged', onChanged));
-  }
-}
-
-extension StringPrefix on String {
-  String ensureStartsWith(String value) {
-    if (!startsWith(value)) {
-      return '$value$this';
-    }
-    return this;
   }
 }

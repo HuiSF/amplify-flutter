@@ -15,12 +15,13 @@
 
 part of authenticator.form_field;
 
-/// {@template authenticator.sign_up_form_field}
-/// A form field component on the Sign Up step.
+/// {@category Prebuilt Widgets}
+/// {@template amplify_authenticator.sign_up_form_field}
+/// A prebuilt form field widget for use on the Sign Up step.
 /// {@endtemplate}
 abstract class SignUpFormField<FieldValue> extends AuthenticatorFormField<
     SignUpField, FieldValue, SignUpFormField<FieldValue>> {
-  /// {@macro authenticator.sign_up_form_field}
+  /// {@macro amplify_authenticator.sign_up_form_field}
   ///
   /// Either [titleKey] or [title] is required.
   const SignUpFormField._({
@@ -45,7 +46,16 @@ abstract class SignUpFormField<FieldValue> extends AuthenticatorFormField<
           requiredOverride: required,
         );
 
-  /// Creates a username component.
+  /// {@template amplify_authenticator.username_form_field}
+  /// Creates a username component based on your app's configuration.
+  ///
+  /// The look and behavior of this widget will depend on your app's auth configuration.
+  /// The `usernameAttributes` will be used to determine if the field is a standard
+  /// username field, and email field, or a phone number field.
+  /// {@endtemplate}
+  ///
+  /// If your app is configured to use email or phone, the value provided for this widget
+  /// will be saved as the user's email or phone number in addition to their username.
   static SignUpFormField username({
     Key? key,
     FormFieldValidator<UsernameInput>? validator,
