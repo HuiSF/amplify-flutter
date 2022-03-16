@@ -18,9 +18,10 @@ import 'package:amplify_datastore/amplify_datastore.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
+import 'package:tuple/tuple.dart';
 
 import '../utils/setup_utils.dart';
-import '../utils/wait_for_expected_event_from_hub.dart';
+import '../utils/test_cloud_synced_model_operation.dart';
 import 'models/many_to_many/ModelProvider.dart';
 
 void main() {
@@ -54,181 +55,105 @@ void main() {
       PostTags(post: posts[1], tag: tags[1]),
       PostTags(post: posts[1], tag: tags[1])
     ];
-    late Future<List<SubscriptionEvent<Post>>> postEvents;
-    late Future<List<SubscriptionEvent<Tag>>> tagEvents;
-    late Future<List<SubscriptionEvent<PostTags>>> postTagsEvents;
+    late Future<List<SubscriptionEvent<Post>>> postModelEventsGetter;
+    late Future<List<SubscriptionEvent<Tag>>> tagModelEventsGetter;
+    late Future<List<SubscriptionEvent<PostTags>>> postTagsModelEventsGetter;
 
     setUpAll(() async {
       await configureDataStore(
           enableCloudSync: enableCloudSync,
           modelProvider: ModelProvider.instance);
 
-      postEvents = Amplify.DataStore.observe(Post.classType)
-          .where((event) => event.eventType == EventType.create)
-          .distinct((prev, next) =>
-              prev.eventType == next.eventType && prev.item.id == next.item.id)
-          .take(posts.length)
-          .toList();
-      tagEvents = Amplify.DataStore.observe(Tag.classType)
-          .where((event) => event.eventType == EventType.create)
-          .distinct((prev, next) =>
-              prev.eventType == next.eventType && prev.item.id == next.item.id)
-          .take(tags.length)
-          .toList();
-      postTagsEvents = Amplify.DataStore.observe(PostTags.classType)
-          .where((event) => event.eventType == EventType.create)
-          .distinct((prev, next) =>
-              prev.eventType == next.eventType && prev.item.id == next.item.id)
-          .take(postTags.length)
-          .toList();
+      postModelEventsGetter = createObservedEventsGetter(
+        Post.classType,
+        take: posts.length,
+        eventType: EventType.create,
+      );
+      tagModelEventsGetter = createObservedEventsGetter(
+        Tag.classType,
+        take: tags.length,
+        eventType: EventType.create,
+      );
+      postTagsModelEventsGetter = createObservedEventsGetter(
+        PostTags.classType,
+        take: postTags.length,
+        eventType: EventType.create,
+      );
     });
 
-    testWidgets('precondition', (WidgetTester tester) async {
-      var queriedPosts = await Amplify.DataStore.query(Post.classType);
-      expect(queriedPosts, isEmpty);
-      var queriedTags = await Amplify.DataStore.query(Tag.classType);
-      expect(queriedTags, isEmpty);
-      var queriedPostTags = await Amplify.DataStore.query(PostTags.classType);
-      expect(queriedPostTags, isEmpty);
-    });
+    expectModelsNotToBeInLocalStorage([
+      Tuple2(Post.classType, posts),
+      Tuple2(Tag.classType, tags),
+      Tuple2(PostTags.classType, postTags),
+    ]);
 
     testWidgets('save post', (WidgetTester tester) async {
-      for (var post in posts) {
-        if (enableCloudSync) {
-          var eventGetter = getExpectedSubscriptionDataProcessedEvent(
-            eventMatcher: (event) {
-              var model = event.element.model;
-              if (model is Post) {
-                return model.id == post.id && event.element.version == 1;
-              }
-
-              return false;
-            },
-          );
-
-          await Amplify.DataStore.save(post);
-
-          var event = await eventGetter;
-          expect(event.element.deleted, isFalse);
-        } else {
+      if (enableCloudSync) {
+        await testCloudSyncedModelOperation(
+          rootModels: posts,
+          expectedRootModelVersion: 1,
+          rootModelOperator: Amplify.DataStore.save,
+          rootModelEventsAssertor: modelIsNotDeletedAssertor,
+        );
+      } else {
+        for (var post in posts) {
           await Amplify.DataStore.save(post);
         }
       }
+
       var queriedPosts = await Amplify.DataStore.query(Post.classType);
-      expect(queriedPosts, isNotEmpty);
+      expect(queriedPosts, containsAll(posts));
     });
 
     testWidgets('save tags', (WidgetTester tester) async {
-      for (var tag in tags) {
-        if (enableCloudSync) {
-          var eventGetter = getExpectedSubscriptionDataProcessedEvent(
-            eventMatcher: (event) {
-              var model = event.element.model;
-              if (model is Tag) {
-                return model.id == tag.id && event.element.version == 1;
-              }
-
-              return false;
-            },
-          );
-
-          await Amplify.DataStore.save(tag);
-
-          var event = await eventGetter;
-          expect(event.element.deleted, isFalse);
-        } else {
+      if (enableCloudSync) {
+        await testCloudSyncedModelOperation(
+          rootModels: tags,
+          expectedRootModelVersion: 1,
+          rootModelOperator: Amplify.DataStore.save,
+          rootModelEventsAssertor: modelIsNotDeletedAssertor,
+        );
+      } else {
+        for (var tag in tags) {
           await Amplify.DataStore.save(tag);
         }
       }
       var queriedTags = await Amplify.DataStore.query(Tag.classType);
-      expect(queriedTags, isNotEmpty);
+      expect(queriedTags, containsAll(tags));
     });
 
     testWidgets('save postTags', (WidgetTester tester) async {
-      for (var postTag in postTags) {
-        if (enableCloudSync) {
-          var eventGetter = getExpectedSubscriptionDataProcessedEvent(
-            eventMatcher: (event) {
-              var model = event.element.model;
-              if (model is PostTags) {
-                return model.id == postTag.id && event.element.version == 1;
-              }
-
-              return false;
-            },
-          );
-
-          await Amplify.DataStore.save(postTag);
-
-          var event = await eventGetter;
-          expect(event.element.deleted, isFalse);
-        } else {
+      if (enableCloudSync) {
+        await testCloudSyncedModelOperation(
+          rootModels: postTags,
+          expectedRootModelVersion: 1,
+          rootModelOperator: Amplify.DataStore.save,
+          rootModelEventsAssertor: modelIsNotDeletedAssertor,
+        );
+      } else {
+        for (var postTag in postTags) {
           await Amplify.DataStore.save(postTag);
         }
       }
+
       var queriedPostTags = await Amplify.DataStore.query(PostTags.classType);
-      expect(queriedPostTags, isNotEmpty);
-    });
-
-    testWidgets('query posts', (WidgetTester tester) async {
-      var queriedPosts = await Amplify.DataStore.query(Post.classType);
-      for (var post in queriedPosts) {
-        expect(posts.contains(post), isTrue);
-      }
-    });
-
-    testWidgets('query tags', (WidgetTester tester) async {
-      var queriedTags = await Amplify.DataStore.query(Tag.classType);
-      for (var tag in queriedTags) {
-        expect(tags.contains(tag), isTrue);
-      }
-    });
-
-    testWidgets('query postTags', (WidgetTester tester) async {
-      var queriedPostTags = await Amplify.DataStore.query(PostTags.classType);
-      for (var postTag in queriedPostTags) {
-        expect(
-            postTags.indexWhere(
-                    (e) => e.post == postTag.post && e.tag == postTag.tag) >
-                -1,
-            isTrue);
-      }
+      expect(queriedPostTags, containsAll(postTags));
     });
 
     testWidgets('observe posts', (WidgetTester tester) async {
-      var events = await postEvents;
-      for (var i = 0; i < posts.length; i++) {
-        var event = events[i];
-        var eventType = event.eventType;
-        var observedPost = event.item;
-        var expectedPost = posts[i];
-        expect(eventType, EventType.create);
-        expect(observedPost, expectedPost);
-      }
+      var events = await postModelEventsGetter;
+      expectObservedEventsToMatchModels(events: events, referenceModels: posts);
     });
 
     testWidgets('observe tags', (WidgetTester tester) async {
-      var events = await tagEvents;
-      for (var i = 0; i < tags.length; i++) {
-        var event = events[i];
-        var eventType = event.eventType;
-        var observedTag = event.item;
-        var expectedTag = tags[i];
-        expect(eventType, EventType.create);
-        expect(observedTag, expectedTag);
-      }
+      var events = await tagModelEventsGetter;
+      expectObservedEventsToMatchModels(events: events, referenceModels: tags);
     });
 
     testWidgets('observe postTags', (WidgetTester tester) async {
-      var events = await postTagsEvents;
-      for (var i = 0; i < tags.length; i++) {
-        var event = events[i];
-        var eventType = event.eventType;
-        var observedPostTag = event.item;
-        var expectedPostTag = postTags[i];
-        expect(eventType, EventType.create);
-        expect(observedPostTag, expectedPostTag);
-      }
+      var events = await postTagsModelEventsGetter;
+      expectObservedEventsToMatchModels(
+          events: events, referenceModels: postTags);
     });
 
     testWidgets('delete post (cascade delete associated postTag)',
@@ -237,51 +162,24 @@ void main() {
       var deletedPostTags = postTags.getRange(0, 2).toList();
 
       if (enableCloudSync) {
-        var postEventGetter = getExpectedSubscriptionDataProcessedEvent(
-          eventMatcher: (event) {
-            var model = event.element.model;
-            if (model is Post) {
-              return model.id == deletedPost.id && event.element.version == 2;
-            }
-
-            return false;
-          },
+        await testCloudSyncedModelOperation(
+          rootModels: [deletedPost],
+          expectedRootModelVersion: 2,
+          rootModelOperator: Amplify.DataStore.delete,
+          rootModelEventsAssertor: modelIsDeletedAssertor,
+          associatedModels: deletedPostTags,
+          expectedAssociatedModelVersion: 2,
+          associatedModelEventsAssertor: modelIsDeletedAssertor,
         );
-
-        var postTagsEventsGetter = deletedPostTags
-            .map((postTag) => getExpectedSubscriptionDataProcessedEvent(
-                  eventMatcher: (event) {
-                    var model = event.element.model;
-                    if (model is PostTags) {
-                      return model.id == postTag.id &&
-                          event.element.version == 2;
-                    }
-
-                    return false;
-                  },
-                ));
-
-        var deleteModelsEvents = [postEventGetter];
-        deleteModelsEvents.addAll(postTagsEventsGetter);
-
-        await Amplify.DataStore.delete(deletedPost);
-
-        var events = await Future.wait(deleteModelsEvents);
-
-        events.forEach((event) {
-          expect(event.element.deleted, isTrue);
-        });
       } else {
         await Amplify.DataStore.delete(deletedPost);
       }
 
       var queriedPosts = await Amplify.DataStore.query(Post.classType);
-      expect(queriedPosts.length, posts.length - 1);
+      expect(queriedPosts, isNot(contains(deletedPost)));
 
       var queriedPostTags = await Amplify.DataStore.query(PostTags.classType);
-      expect(
-          queriedPostTags.indexWhere((postTag) => postTag.post == deletedPost),
-          -1);
+      expect(queriedPostTags, isNot(containsAll(deletedPostTags)));
     });
 
     testWidgets('delete tag (cascade delete associated postTag)',
@@ -290,110 +188,60 @@ void main() {
       var deletedPostTags = postTags.getRange(2, postTags.length).toList();
 
       if (enableCloudSync) {
-        var tagEventGetter = getExpectedSubscriptionDataProcessedEvent(
-          eventMatcher: (event) {
-            var model = event.element.model;
-            if (model is Tag) {
-              return model.id == deletedTag.id && event.element.version == 2;
-            }
-
-            return false;
-          },
+        await testCloudSyncedModelOperation(
+          rootModels: [deletedTag],
+          expectedRootModelVersion: 2,
+          rootModelOperator: Amplify.DataStore.delete,
+          rootModelEventsAssertor: modelIsDeletedAssertor,
+          associatedModels: deletedPostTags,
+          expectedAssociatedModelVersion: 2,
+          associatedModelEventsAssertor: modelIsDeletedAssertor,
         );
-
-        var postTagsEventsGetter = deletedPostTags
-            .map((postTag) => getExpectedSubscriptionDataProcessedEvent(
-                  eventMatcher: (event) {
-                    var model = event.element.model;
-                    if (model is PostTags) {
-                      return model.id == postTag.id &&
-                          event.element.version == 2;
-                    }
-
-                    return false;
-                  },
-                ));
-
-        var deleteModelsEvents = [tagEventGetter];
-        deleteModelsEvents.addAll(postTagsEventsGetter);
-
-        await Amplify.DataStore.delete(deletedTag);
-
-        var events = await Future.wait(deleteModelsEvents);
-
-        events.forEach((event) {
-          expect(event.element.deleted, isTrue);
-        });
       } else {
         await Amplify.DataStore.delete(deletedTag);
       }
 
       var queriedTags = await Amplify.DataStore.query(Tag.classType);
-      expect(queriedTags.length, tags.length - 1);
+      expect(queriedTags, isNot(contains(deletedTag)));
 
       var queriedPostTags = await Amplify.DataStore.query(PostTags.classType);
-      expect(queriedPostTags.indexWhere((postTag) => postTag.tag == deletedTag),
-          -1);
+      expect(queriedPostTags, isNot(containsAll(deletedPostTags)));
     });
 
     testWidgets('delete remaining post', (WidgetTester tester) async {
       var deletedPost = posts[1];
 
       if (enableCloudSync) {
-        var eventGetter = getExpectedSubscriptionDataProcessedEvent(
-          eventMatcher: (event) {
-            var model = event.element.model;
-            if (model is Post) {
-              return model.id == deletedPost.id && event.element.version == 2;
-            }
-
-            return false;
-          },
+        await testCloudSyncedModelOperation(
+          rootModels: [deletedPost],
+          expectedRootModelVersion: 2,
+          rootModelOperator: Amplify.DataStore.delete,
+          rootModelEventsAssertor: modelIsDeletedAssertor,
         );
-
-        await Amplify.DataStore.delete(deletedPost);
-
-        var event = await eventGetter;
-        expect(event.element.deleted, isTrue);
       } else {
         await Amplify.DataStore.delete(deletedPost);
       }
 
       var queriedPosts = await Amplify.DataStore.query(Post.classType);
-      expect(queriedPosts, isEmpty);
-
-      var queriedPostTags = await Amplify.DataStore.query(PostTags.classType);
-      expect(queriedPostTags, isEmpty);
+      expect(queriedPosts, isNot(contains(deletedPost)));
     });
 
     testWidgets('delete remaining tag', (WidgetTester tester) async {
       var deletedTag = tags[0];
 
       if (enableCloudSync) {
-        var eventGetter = getExpectedSubscriptionDataProcessedEvent(
-          eventMatcher: (event) {
-            var model = event.element.model;
-            if (model is Tag) {
-              return model.id == deletedTag.id && event.element.version == 2;
-            }
-
-            return false;
-          },
+        await testCloudSyncedModelOperation(
+          rootModels: [deletedTag],
+          expectedRootModelVersion: 2,
+          rootModelOperator: Amplify.DataStore.delete,
+          rootModelEventsAssertor: modelIsDeletedAssertor,
         );
-
-        await Amplify.DataStore.delete(deletedTag);
-
-        var event = await eventGetter;
-        expect(event.element.deleted, isTrue);
       } else {
         await Amplify.DataStore.delete(deletedTag);
       }
 
       var queriedTags = await Amplify.DataStore.query(Tag.classType);
-      expect(queriedTags, isEmpty);
-
-      var queriedPostTags = await Amplify.DataStore.query(PostTags.classType);
-      expect(queriedPostTags, isEmpty);
+      expect(queriedTags, isNot(contains(deletedTag)));
     });
   });
 }

@@ -18,9 +18,10 @@ import 'package:amplify_datastore/amplify_datastore.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
+import 'package:tuple/tuple.dart';
 
 import '../utils/setup_utils.dart';
-import '../utils/wait_for_expected_event_from_hub.dart';
+import '../utils/test_cloud_synced_model_operation.dart';
 import 'models/multi_relationship/ModelProvider.dart';
 
 void main() {
@@ -63,194 +64,111 @@ void main() {
       MultiRelatedRegistration(attendee: attendees[1], meeting: meetings[1]),
     ];
 
-    late Future<List<SubscriptionEvent<MultiRelatedMeeting>>> meetingEvents;
-    late Future<List<SubscriptionEvent<MultiRelatedAttendee>>> attendeeEvents;
+    late Future<List<SubscriptionEvent<MultiRelatedMeeting>>>
+        meetingModelEventsGetter;
+    late Future<List<SubscriptionEvent<MultiRelatedAttendee>>>
+        attendeeModelEventsGetter;
     late Future<List<SubscriptionEvent<MultiRelatedRegistration>>>
-        registrationEvents;
+        registrationModelEventsGetter;
 
     setUpAll(() async {
       await configureDataStore(
           enableCloudSync: enableCloudSync,
           modelProvider: ModelProvider.instance);
 
-      meetingEvents = Amplify.DataStore.observe(MultiRelatedMeeting.classType)
-          .where((event) => event.eventType == EventType.create)
-          .distinct((prev, next) =>
-              prev.eventType == next.eventType && prev.item.id == next.item.id)
-          .take(meetings.length)
-          .toList();
-      attendeeEvents = Amplify.DataStore.observe(MultiRelatedAttendee.classType)
-          .where((event) => event.eventType == EventType.create)
-          .distinct((prev, next) =>
-              prev.eventType == next.eventType && prev.item.id == next.item.id)
-          .take(attendees.length)
-          .toList();
-      registrationEvents = Amplify.DataStore.observe(
-              MultiRelatedRegistration.classType)
-          .where((event) => event.eventType == EventType.create)
-          .distinct((prev, next) =>
-              prev.eventType == next.eventType && prev.item.id == next.item.id)
-          .take(registrations.length)
-          .toList();
+      meetingModelEventsGetter = createObservedEventsGetter(
+        MultiRelatedMeeting.classType,
+        take: meetings.length,
+        eventType: EventType.create,
+      );
+      attendeeModelEventsGetter = createObservedEventsGetter(
+        MultiRelatedAttendee.classType,
+        take: attendees.length,
+        eventType: EventType.create,
+      );
+      registrationModelEventsGetter = createObservedEventsGetter(
+        MultiRelatedRegistration.classType,
+        take: registrations.length,
+        eventType: EventType.create,
+      );
     });
 
-    testWidgets('precondition', (WidgetTester tester) async {
-      var queriedMeetings =
-          await Amplify.DataStore.query(MultiRelatedMeeting.classType);
-      expect(queriedMeetings, isEmpty);
-      var queriedAttendees =
-          await Amplify.DataStore.query(MultiRelatedAttendee.classType);
-      expect(queriedAttendees, isEmpty);
-      var queriedRegistrations =
-          await Amplify.DataStore.query(MultiRelatedRegistration.classType);
-      expect(queriedRegistrations, isEmpty);
-    });
+    expectModelsNotToBeInLocalStorage([
+      Tuple2(MultiRelatedMeeting.classType, meetings),
+      Tuple2(MultiRelatedAttendee.classType, attendees),
+      Tuple2(MultiRelatedRegistration.classType, registrations),
+    ]);
 
     testWidgets('save meetings', (WidgetTester tester) async {
-      for (var meeting in meetings) {
-        if (enableCloudSync) {
-          var eventGetter = getExpectedSubscriptionDataProcessedEvent(
-            eventMatcher: (event) {
-              var model = event.element.model;
-              if (model is MultiRelatedMeeting) {
-                return model.id == meeting.id && event.element.version == 1;
-              }
-
-              return false;
-            },
-          );
-
-          await Amplify.DataStore.save(meeting);
-
-          var event = await eventGetter;
-          expect(event.element.deleted, isFalse);
-        } else {
+      if (enableCloudSync) {
+        await testCloudSyncedModelOperation(
+          rootModels: meetings,
+          expectedRootModelVersion: 1,
+          rootModelOperator: Amplify.DataStore.save,
+          rootModelEventsAssertor: modelIsNotDeletedAssertor,
+        );
+      } else {
+        for (var meeting in meetings) {
           await Amplify.DataStore.save(meeting);
         }
       }
       var queriedMeetings =
           await Amplify.DataStore.query(MultiRelatedMeeting.classType);
-      expect(queriedMeetings, isNotEmpty);
+      expect(queriedMeetings, containsAll(meetings));
     });
 
     testWidgets('save attendees', (WidgetTester tester) async {
-      for (var attendee in attendees) {
-        if (enableCloudSync) {
-          var eventGetter = getExpectedSubscriptionDataProcessedEvent(
-            eventMatcher: (event) {
-              var model = event.element.model;
-              if (model is MultiRelatedAttendee) {
-                return model.id == attendee.id && event.element.version == 1;
-              }
-
-              return false;
-            },
-          );
-
-          await Amplify.DataStore.save(attendee);
-
-          var event = await eventGetter;
-          expect(event.element.deleted, isFalse);
-        } else {
+      if (enableCloudSync) {
+        await testCloudSyncedModelOperation(
+          rootModels: attendees,
+          expectedRootModelVersion: 1,
+          rootModelOperator: Amplify.DataStore.save,
+          rootModelEventsAssertor: modelIsNotDeletedAssertor,
+        );
+      } else {
+        for (var attendee in attendees) {
           await Amplify.DataStore.save(attendee);
         }
       }
       var queriedAttendees =
           await Amplify.DataStore.query(MultiRelatedAttendee.classType);
-      expect(queriedAttendees, isNotEmpty);
+      expect(queriedAttendees, containsAll(attendees));
     });
 
     testWidgets('save registrations', (WidgetTester tester) async {
-      for (var registration in registrations) {
-        if (enableCloudSync) {
-          var eventGetter = getExpectedSubscriptionDataProcessedEvent(
-            eventMatcher: (event) {
-              var model = event.element.model;
-              if (model is MultiRelatedRegistration) {
-                return model.id == registration.id &&
-                    event.element.version == 1;
-              }
-
-              return false;
-            },
-          );
-
-          await Amplify.DataStore.save(registration);
-
-          var event = await eventGetter;
-          expect(event.element.deleted, isFalse);
-        } else {
+      if (enableCloudSync) {
+        await testCloudSyncedModelOperation(
+          rootModels: registrations,
+          expectedRootModelVersion: 1,
+          rootModelOperator: Amplify.DataStore.save,
+          rootModelEventsAssertor: modelIsNotDeletedAssertor,
+        );
+      } else {
+        for (var registration in registrations) {
           await Amplify.DataStore.save(registration);
         }
       }
       var queriedRegistrations =
           await Amplify.DataStore.query(MultiRelatedRegistration.classType);
-      expect(queriedRegistrations, isNotEmpty);
-    });
-
-    testWidgets('query meetings', (WidgetTester tester) async {
-      var queriedMeetings =
-          await Amplify.DataStore.query(MultiRelatedMeeting.classType);
-      for (var meeting in queriedMeetings) {
-        expect(meetings.contains(meeting), isTrue);
-      }
-    });
-
-    testWidgets('query attendees', (WidgetTester tester) async {
-      var queriedAttendees =
-          await Amplify.DataStore.query(MultiRelatedAttendee.classType);
-      for (var attendee in queriedAttendees) {
-        expect(attendees.contains(attendee), isTrue);
-      }
-    });
-
-    testWidgets('query registraions', (WidgetTester tester) async {
-      var queriedRegistrations =
-          await Amplify.DataStore.query(MultiRelatedRegistration.classType);
-      for (var registration in queriedRegistrations) {
-        expect(
-            registrations.indexWhere((e) =>
-                    e.meeting == registration.meeting &&
-                    e.attendee == registration.attendee) >
-                -1,
-            isTrue);
-      }
+      expect(queriedRegistrations, containsAll(registrations));
     });
 
     testWidgets('observe meetings', (WidgetTester tester) async {
-      var events = await meetingEvents;
-      for (var i = 0; i < meetings.length; i++) {
-        var event = events[i];
-        var eventType = event.eventType;
-        var observedMeeting = event.item;
-        var expectedMeeting = meetings[i];
-        expect(eventType, EventType.create);
-        expect(observedMeeting, expectedMeeting);
-      }
+      var events = await meetingModelEventsGetter;
+      expectObservedEventsToMatchModels(
+          events: events, referenceModels: meetings);
     });
 
     testWidgets('observe attendees', (WidgetTester tester) async {
-      var events = await attendeeEvents;
-      for (var i = 0; i < attendees.length; i++) {
-        var event = events[i];
-        var eventType = event.eventType;
-        var observedAttendee = event.item;
-        var expectedAttendee = attendees[i];
-        expect(eventType, EventType.create);
-        expect(observedAttendee, expectedAttendee);
-      }
+      var events = await attendeeModelEventsGetter;
+      expectObservedEventsToMatchModels(
+          events: events, referenceModels: attendees);
     });
 
-    testWidgets('observe resgistrations', (WidgetTester tester) async {
-      var events = await registrationEvents;
-      for (var i = 0; i < registrations.length; i++) {
-        var event = events[i];
-        var eventType = event.eventType;
-        var observedRegistration = event.item;
-        var expectedRegistration = registrations[i];
-        expect(eventType, EventType.create);
-        expect(observedRegistration, expectedRegistration);
-      }
+    testWidgets('observe registrations', (WidgetTester tester) async {
+      var events = await registrationModelEventsGetter;
+      expectObservedEventsToMatchModels(
+          events: events, referenceModels: registrations);
     });
 
     testWidgets('delete meeting (cascade delete associated registration)',
@@ -259,51 +177,26 @@ void main() {
       var deletedRegistration = registrations[0];
 
       if (enableCloudSync) {
-        var mettingEventGetter = getExpectedSubscriptionDataProcessedEvent(
-          eventMatcher: (event) {
-            var model = event.element.model;
-            if (model is MultiRelatedMeeting) {
-              return model.id == deletedMeeting.id &&
-                  event.element.version == 2;
-            }
-
-            return false;
-          },
+        await testCloudSyncedModelOperation(
+          rootModels: [deletedMeeting],
+          expectedRootModelVersion: 2,
+          rootModelOperator: Amplify.DataStore.delete,
+          rootModelEventsAssertor: modelIsDeletedAssertor,
+          associatedModels: [deletedRegistration],
+          expectedAssociatedModelVersion: 2,
+          associatedModelEventsAssertor: modelIsDeletedAssertor,
         );
-        var registrationEventGetter = getExpectedSubscriptionDataProcessedEvent(
-          eventMatcher: (event) {
-            var model = event.element.model;
-            if (model is MultiRelatedRegistration) {
-              return model.id == deletedRegistration.id &&
-                  event.element.version == 2;
-            }
-
-            return false;
-          },
-        );
-
-        await Amplify.DataStore.delete(deletedMeeting);
-
-        var events =
-            await Future.wait([mettingEventGetter, registrationEventGetter]);
-
-        events.forEach((event) {
-          expect(event.element.deleted, isTrue);
-        });
       } else {
         await Amplify.DataStore.delete(deletedMeeting);
       }
 
       var queriedMeetings =
           await Amplify.DataStore.query(MultiRelatedMeeting.classType);
-      expect(queriedMeetings.length, meetings.length - 1);
+      expect(queriedMeetings, isNot(contains(deletedMeeting)));
 
       var queriedRegistrations =
           await Amplify.DataStore.query(MultiRelatedRegistration.classType);
-      expect(
-          queriedRegistrations.indexWhere(
-              (registration) => registration.meeting == deletedMeeting),
-          -1);
+      expect(queriedRegistrations, isNot(contains(deletedRegistration)));
     });
 
     testWidgets('delete attendee (cascade delete associated registration)',
@@ -312,50 +205,26 @@ void main() {
       var deletedRegistration = registrations[1];
 
       if (enableCloudSync) {
-        var attendeeEventGetter = getExpectedSubscriptionDataProcessedEvent(
-          eventMatcher: (event) {
-            var model = event.element.model;
-            if (model is MultiRelatedAttendee) {
-              return model.id == deletedAttendee.id &&
-                  event.element.version == 2;
-            }
-
-            return false;
-          },
+        await testCloudSyncedModelOperation(
+          rootModels: [deletedAttendee],
+          expectedRootModelVersion: 2,
+          rootModelOperator: Amplify.DataStore.delete,
+          rootModelEventsAssertor: modelIsDeletedAssertor,
+          associatedModels: [deletedRegistration],
+          expectedAssociatedModelVersion: 2,
+          associatedModelEventsAssertor: modelIsDeletedAssertor,
         );
-        var registrationEventGetter = getExpectedSubscriptionDataProcessedEvent(
-          eventMatcher: (event) {
-            var model = event.element.model;
-            if (model is MultiRelatedRegistration) {
-              return model.id == deletedRegistration.id &&
-                  event.element.version == 2;
-            }
-
-            return false;
-          },
-        );
-
-        await Amplify.DataStore.delete(deletedAttendee);
-
-        var events =
-            await Future.wait([attendeeEventGetter, registrationEventGetter]);
-        events.forEach((event) {
-          expect(event.element.deleted, isTrue);
-        });
       } else {
         await Amplify.DataStore.delete(deletedAttendee);
       }
 
       var queriedAttendees =
           await Amplify.DataStore.query(MultiRelatedAttendee.classType);
-      expect(queriedAttendees.length, attendees.length - 1);
+      expect(queriedAttendees, isNot(contains(deletedAttendee)));
 
       var queriedRegistrations =
           await Amplify.DataStore.query(MultiRelatedRegistration.classType);
-      expect(
-          queriedRegistrations.indexWhere(
-              (registration) => registration.attendee == deletedAttendee),
-          -1);
+      expect(queriedRegistrations, isNot(contains(deletedRegistration)));
     });
 
     testWidgets('delete remaining meeting', (WidgetTester tester) async {
@@ -363,81 +232,45 @@ void main() {
       var deletedRegistration = registrations[2];
 
       if (enableCloudSync) {
-        var mettingEventGetter = getExpectedSubscriptionDataProcessedEvent(
-          eventMatcher: (event) {
-            var model = event.element.model;
-            if (model is MultiRelatedMeeting) {
-              return model.id == deletedMeeting.id &&
-                  event.element.version == 2;
-            }
-
-            return false;
-          },
+        await testCloudSyncedModelOperation(
+          rootModels: [deletedMeeting],
+          expectedRootModelVersion: 2,
+          rootModelOperator: Amplify.DataStore.delete,
+          rootModelEventsAssertor: modelIsDeletedAssertor,
+          associatedModels: [deletedRegistration],
+          expectedAssociatedModelVersion: 2,
+          associatedModelEventsAssertor: modelIsDeletedAssertor,
         );
-        var cloudSyncedRegistrationEventGetter =
-            getExpectedSubscriptionDataProcessedEvent(
-          eventMatcher: (event) {
-            var model = event.element.model;
-            if (model is MultiRelatedRegistration) {
-              return model.id == deletedRegistration.id &&
-                  event.element.version == 2;
-            }
-
-            return false;
-          },
-        );
-
-        await Amplify.DataStore.delete(deletedMeeting);
-
-        var events = await Future.wait(
-            [mettingEventGetter, cloudSyncedRegistrationEventGetter]);
-        events.forEach((event) {
-          expect(event.element.deleted, isTrue);
-        });
       } else {
         await Amplify.DataStore.delete(deletedMeeting);
       }
 
       var queriedMeetings =
           await Amplify.DataStore.query(MultiRelatedMeeting.classType);
-      expect(queriedMeetings, isEmpty);
+      expect(queriedMeetings, isNot(contains(deletedMeeting)));
 
       var queriedRegistrations =
           await Amplify.DataStore.query(MultiRelatedRegistration.classType);
-      expect(queriedRegistrations, isEmpty);
+      expect(queriedRegistrations, isNot(contains(deletedRegistration)));
     });
 
     testWidgets('delete remaining attendee', (WidgetTester tester) async {
       var deletedAttendee = attendees[1];
 
       if (enableCloudSync) {
-        var eventGetter = getExpectedSubscriptionDataProcessedEvent(
-          eventMatcher: (event) {
-            var model = event.element.model;
-            if (model is MultiRelatedAttendee) {
-              return model.id == deletedAttendee.id &&
-                  event.element.version == 2;
-            }
-
-            return false;
-          },
+        await testCloudSyncedModelOperation(
+          rootModels: [deletedAttendee],
+          expectedRootModelVersion: 2,
+          rootModelOperator: Amplify.DataStore.delete,
+          rootModelEventsAssertor: modelIsDeletedAssertor,
         );
-
-        await Amplify.DataStore.delete(deletedAttendee);
-
-        var event = await eventGetter;
-        expect(event.element.deleted, isTrue);
       } else {
         await Amplify.DataStore.delete(deletedAttendee);
       }
 
       var queriedAttendees =
           await Amplify.DataStore.query(MultiRelatedAttendee.classType);
-      expect(queriedAttendees, isEmpty);
-
-      var queriedRegistrations =
-          await Amplify.DataStore.query(MultiRelatedRegistration.classType);
-      expect(queriedRegistrations, isEmpty);
+      expect(queriedAttendees, isNot(contains(deletedAttendee)));
     });
   });
 }

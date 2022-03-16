@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License").
  * You may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
 
 import '../utils/setup_utils.dart';
-import '../utils/wait_for_expected_event_from_hub.dart';
+import '../utils/test_cloud_synced_model_operation.dart';
 import 'models/basic_model_operation/ModelProvider.dart';
 
 void main() {
@@ -28,6 +28,8 @@ void main() {
   group(
       'Basic model operation${enableCloudSync ? ' with API sync 🌩 enabled' : ''} -',
       () {
+    Blog testBlog = Blog(name: 'test blog');
+
     setUpAll(() async {
       await configureDataStore(
           enableCloudSync: enableCloudSync,
@@ -37,91 +39,76 @@ void main() {
     testWidgets(
         'should save a new model ${enableCloudSync ? 'and sync to cloud' : ''}',
         (WidgetTester tester) async {
-      Blog testBlog = Blog(name: 'test blog');
-
       if (enableCloudSync) {
-        // set an async getter to retrieve a desired hub event with a speicfic
-        // event matcher
-        var eventGetter = getExpectedSubscriptionDataProcessedEvent(
-          eventMatcher: (event) =>
-              (event.element.model as Blog).id == testBlog.id &&
-              // newly saved model at this step should have version: 1
-              event.element.version == 1,
+        await testCloudSyncedModelOperation(
+          rootModels: [testBlog],
+          expectedRootModelVersion: 1,
+          rootModelOperator: Amplify.DataStore.save,
+          rootModelEventsAssertor: (events) {
+            events.forEach((event) {
+              expect(event.element.deleted, isFalse);
+            });
+          },
         );
-
-        // save model locally and to sync to cloud
-        await Amplify.DataStore.save(testBlog);
-
-        // wait for the desired event to arrive
-        var event = await eventGetter;
-        expect(event.element.deleted, isFalse);
       } else {
         await Amplify.DataStore.save(testBlog);
       }
 
-      var blogs = await Amplify.DataStore.query(Blog.classType);
-      expect(blogs.length, 1);
-      expect(blogs.contains(testBlog), isTrue);
+      var queriedBlogs = await Amplify.DataStore.query(Blog.classType);
+      expect(queriedBlogs, contains(testBlog));
     });
 
     testWidgets(
       'should update existing model ${enableCloudSync ? 'and sync to cloud' : ''}',
       (WidgetTester tester) async {
-        // get previously saved model
-        var testBlog = (await Amplify.DataStore.query(Blog.classType))[0];
-        // update model
         var updatedTestBlog = testBlog.copyWith(name: "updated test blog");
 
         if (enableCloudSync) {
-          var eventGetter = getExpectedSubscriptionDataProcessedEvent(
-            eventMatcher: (event) =>
-                (event.element.model as Blog).id == updatedTestBlog.id &&
-                // updated model at this step should have version: 2
-                event.element.version == 2,
+          await testCloudSyncedModelOperation(
+            rootModels: [updatedTestBlog],
+            expectedRootModelVersion: 2,
+            rootModelOperator: Amplify.DataStore.save,
+            rootModelEventsAssertor: (events) {
+              events.forEach((event) {
+                expect(event.element.deleted, isFalse);
+              });
+            },
           );
-
-          await Amplify.DataStore.save(updatedTestBlog);
-
-          var event = await eventGetter;
-          expect(event.element.deleted, isFalse);
         } else {
           await Amplify.DataStore.save(updatedTestBlog);
         }
 
-        var updatedBlogs = await Amplify.DataStore.query(Blog.classType);
+        var queriedBlogs = await Amplify.DataStore.query(
+          Blog.classType,
+          where: Blog.ID.eq(updatedTestBlog.id),
+        );
 
-        // verify blog was updated
-        expect(updatedBlogs.length, 1);
-        expect(updatedBlogs.contains(updatedTestBlog), isTrue);
+        expect(queriedBlogs, contains(updatedTestBlog));
       },
     );
 
     testWidgets(
       'should delete existing model ${enableCloudSync ? 'and sync to cloud' : ''}',
       (WidgetTester tester) async {
-        // get previously saved model
-        var testBlog = (await Amplify.DataStore.query(Blog.classType))[0];
-
         if (enableCloudSync) {
-          var eventGetter = getExpectedSubscriptionDataProcessedEvent(
-            eventMatcher: (event) =>
-                (event.element.model as Blog).id == testBlog.id &&
-                // deleted model at this step should have version: 3
-                event.element.version == 3,
+          await testCloudSyncedModelOperation(
+            rootModels: [testBlog],
+            expectedRootModelVersion: 3,
+            rootModelOperator: Amplify.DataStore.delete,
+            rootModelEventsAssertor: (events) {
+              events.forEach((event) {
+                expect(event.element.deleted, isTrue);
+              });
+            },
           );
-
-          await Amplify.DataStore.delete(testBlog);
-
-          var event = await eventGetter;
-          expect(event.element.deleted, isTrue);
         } else {
           await Amplify.DataStore.delete(testBlog);
         }
 
-        var blogs = await Amplify.DataStore.query(Blog.classType);
+        var queriedBlogs = await Amplify.DataStore.query(Blog.classType);
 
         // verify blog was deleted
-        expect(blogs, isEmpty);
+        expect(queriedBlogs, isNot(contains(testBlog)));
       },
     );
   });
