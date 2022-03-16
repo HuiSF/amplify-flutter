@@ -213,7 +213,8 @@ workflows:
                   "amplify_auth_cognito:10",
                   "amplify_authenticator:0",
                   "amplify_core:10",
-                  "amplify_datastore:20",
+                  # TODO, re-enable after releasing 0.4.2
+                  #"amplify_datastore:20",
                   "amplify_flutter:20",
                   "amplify_storage_s3:10",
                 ]
