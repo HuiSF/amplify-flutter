@@ -32,13 +32,14 @@ class WaitForExpectedEventFromHub<T extends HubEventPayload> {
   }
 }
 
-Future<SubscriptionDataProcessed> getExpectedSubscriptionDataProcessedEvent({
-  required bool Function(SubscriptionDataProcessed) eventMatcher,
+Future<SubscriptionDataProcessedEvent>
+    getExpectedSubscriptionDataProcessedEvent({
+  required bool Function(SubscriptionDataProcessedEvent) eventMatcher,
 }) async {
-  var getter = WaitForExpectedEventFromHub<SubscriptionDataProcessed>(
+  var getter = WaitForExpectedEventFromHub<SubscriptionDataProcessedEvent>(
     eventName: 'subscriptionDataProcessed',
     eventMatcher: (HubEventPayload eventPayload) {
-      if (eventPayload is SubscriptionDataProcessed) {
+      if (eventPayload is SubscriptionDataProcessedEvent) {
         return eventMatcher(eventPayload);
       }
 

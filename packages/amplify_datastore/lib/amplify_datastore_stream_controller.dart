@@ -99,7 +99,7 @@ _onListen() {
           {
             _rebroadcast(
               'subscriptionDataProcessed',
-              payload: SubscriptionDataProcessed(
+              payload: SubscriptionDataProcessedEvent(
                 event,
                 modelProvider,
                 'subscriptionDataProcessed',

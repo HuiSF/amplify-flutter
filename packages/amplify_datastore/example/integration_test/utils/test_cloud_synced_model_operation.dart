@@ -7,13 +7,13 @@ import 'setup_utils.dart';
 import 'wait_for_expected_event_from_hub.dart';
 
 typedef EventsAssertor = void Function(
-    List<SubscriptionDataProcessed<Model>> events);
+    List<SubscriptionDataProcessedEvent<Model>> events);
 typedef ModelOperator = Future<void> Function<T extends Model>(T model,
     {QueryPredicate? where});
 
 /// Check each of the [events] is presenting a deleted model.
 void modelIsDeletedAssertor<T extends Model>(
-    List<SubscriptionDataProcessed<T>> events) {
+    List<SubscriptionDataProcessedEvent<T>> events) {
   events.forEach((event) {
     expect(event.element.deleted, isTrue);
   });
@@ -21,7 +21,7 @@ void modelIsDeletedAssertor<T extends Model>(
 
 /// Check each of the [events] is presenting a model that is not deleted.
 void modelIsNotDeletedAssertor<T extends Model>(
-    List<SubscriptionDataProcessed<T>> events) {
+    List<SubscriptionDataProcessedEvent<T>> events) {
   events.forEach((event) {
     expect(event.element.deleted, isFalse);
   });

@@ -16,11 +16,11 @@
 import 'package:amplify_datastore_plugin_interface/amplify_datastore_plugin_interface.dart';
 import 'package:amplify_core/amplify_core.dart';
 
-class SubscriptionDataProcessed<M extends Model> extends HubEventPayload {
+class SubscriptionDataProcessedEvent<M extends Model> extends HubEventPayload {
   late HubEventElementWithMetadata<M> element;
   late String modelName;
 
-  SubscriptionDataProcessed(Map<dynamic, dynamic> serializedData,
+  SubscriptionDataProcessedEvent(Map<dynamic, dynamic> serializedData,
       ModelProviderInterface provider, String eventName) {
     element = HubEventElementWithMetadata.fromMap(serializedData, provider);
     modelName = serializedData["modelName"] as String;
