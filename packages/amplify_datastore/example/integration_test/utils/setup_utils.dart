@@ -70,7 +70,7 @@ class DataStoreStarter {
   final Completer _completer = Completer();
   late StreamSubscription hubSubscription;
 
-  Future<void> startDataStore() async {
+  Future<void> startDataStore() {
     hubSubscription = Amplify.Hub.listen([HubChannel.DataStore], (event) {
       if (event.eventName == 'ready') {
         print(
