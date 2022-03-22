@@ -56,6 +56,7 @@ fi
 
 
 SEPARATE_INTEGRATION_TESTS_PATH="integration_test/separate_integration_tests"
+
 if [ -d "${SEPARATE_INTEGRATION_TESTS_PATH}" ]
 then
     TEST_ENTRIES=`ls ${SEPARATE_INTEGRATION_TESTS_PATH}/*.dart`
@@ -80,23 +81,23 @@ then
             resultsList+=(1)
         fi
     done
+fi
 
-    testFailure=0
-    for i in "${!testsList[@]}"; do
-        resultPrint=""
-        if [ "${resultsList[i]}" == 0 ]
-        then
-            echo "✅ ${testsList[i]}"
-        else
-            testFailure=1
-            echo "❌ ${testsList[i]}"
-        fi
-    done
-
-    if [ $testFailure -eq 1 ]
+testFailure=0
+for i in "${!testsList[@]}"; do
+    resultPrint=""
+    if [ "${resultsList[i]}" == 0 ]
     then
-        exit 1
+        echo "✅ ${testsList[i]}"
     else
-        exit 0
+        testFailure=1
+        echo "❌ ${testsList[i]}"
     fi
+done
+
+if [ $testFailure -eq 1 ]
+then
+    exit 1
+else
+    exit 0
 fi
