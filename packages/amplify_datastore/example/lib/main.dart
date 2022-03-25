@@ -21,11 +21,12 @@ import 'dart:async';
 import 'package:amplify_datastore/amplify_datastore.dart';
 
 // Uncomment the below line to enable online sync
-//import 'package:amplify_api/amplify_api.dart';
+import 'package:amplify_api/amplify_api.dart';
 
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/services.dart';
 import 'models/ModelProvider.dart';
+import 'amplifyconfiguration.dart';
 
 part 'queries_display_widgets.dart';
 part 'save_model_widgets.dart';
@@ -62,6 +63,7 @@ class _MyAppState extends State<MyApp> {
   late StreamSubscription hubSubscription;
   bool _listeningToHub = true;
   late AmplifyDataStore datastorePlugin;
+  String containedStr = "ppp";
 
   final _titleController = TextEditingController();
   final _ratingController = TextEditingController();
@@ -93,11 +95,11 @@ class _MyAppState extends State<MyApp> {
       // Configure
 
       // Uncomment the below lines to enable online sync.
-      // await Amplify.addPlugin(AmplifyAPI());
-      // await Amplify.configure(amplifyconfig);
+      await Amplify.addPlugin(AmplifyAPI());
+      await Amplify.configure(amplifyconfig);
 
       // Remove this line when using the lines above for online sync
-      await Amplify.configure("{}");
+      // await Amplify.configure("{}");
     } on AmplifyAlreadyConfiguredException {
       print(
           'Amplify was already configured. Looks like app restarted on android.');
@@ -112,6 +114,7 @@ class _MyAppState extends State<MyApp> {
       bool status = snapshot.isSynced;
       print(
           '[Observe Query] Blog snapshot received with $count models, status: $status at $now');
+      print(snapshot.items);
       setState(() {
         _blogs = snapshot.items;
       });
@@ -177,6 +180,8 @@ class _MyAppState extends State<MyApp> {
           return;
         }
         print(msg);
+        print(
+            '🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀 - ${msg.eventName} - ${msg.payload}');
       });
       _listeningToHub = true;
     });
@@ -298,8 +303,33 @@ class _MyAppState extends State<MyApp> {
 
             Padding(padding: EdgeInsets.all(10.0)),
 
+            ElevatedButton(
+                onPressed: () async {
+                  {
+                    // await Amplify.DataStore.stop();
+
+                    // setState(() async {
+                    //   containedStr = "ccc";
+                    //   await Amplify.DataStore.start();
+                    // });
+                    var blog =
+                        (await Amplify.DataStore.query(Blog.classType))[0];
+                    print(blog);
+                    var updatedBlog = blog.copyWith(name: "updated blog 6");
+                    await Amplify.DataStore.save(updatedBlog);
+                  }
+                },
+                child: const Text("Re-evaluate")),
+
             // Row for query buttons
             displayQueryButtons(_isAmplifyConfigured, this),
+            ElevatedButton(
+                onPressed: () async {
+                  {
+                    await Amplify.DataStore.start();
+                  }
+                },
+                child: const Text("Start DS")),
 
             Padding(padding: EdgeInsets.all(5.0)),
             Text("Listen to DataStore Hub"),
