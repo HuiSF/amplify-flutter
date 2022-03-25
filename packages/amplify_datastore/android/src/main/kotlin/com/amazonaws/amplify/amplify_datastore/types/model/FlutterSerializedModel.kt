@@ -15,6 +15,7 @@
 
 package com.amazonaws.amplify.amplify_datastore.types.model
 
+import com.amazonaws.amplify.amplify_core.cast
 import com.amplifyframework.core.model.Model
 import com.amplifyframework.core.model.ModelSchema
 import com.amplifyframework.core.model.SerializedCustomType
@@ -53,6 +54,9 @@ data class FlutterSerializedModel(val serializedModel: SerializedModel) {
         return serializedData.mapValues {
             val field = modelSchema.fields[it.key]
             if (field == null) {
+                // At some occasions the SerializeData returned from amplify-android contains meta fields
+                // e.g. _version, _delete which are not a model filed
+                // for this case we assign a null value to these meta fields as default
                 null
             } else {
                 when (val value: Any = it.value) {
@@ -66,7 +70,7 @@ data class FlutterSerializedModel(val serializedModel: SerializedModel) {
                         if (field.isCustomType) {
                             // for a list like field if its type is CustomType
                             // Then the item type must be CustomType
-                            (value as List<SerializedCustomType>).map { item ->
+                            (value.cast<SerializedCustomType>()).map { item ->
                                 FlutterSerializedCustomType(item).toMap()
                             }
                         }

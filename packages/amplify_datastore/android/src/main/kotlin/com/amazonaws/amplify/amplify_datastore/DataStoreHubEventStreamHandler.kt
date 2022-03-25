@@ -193,11 +193,12 @@ class DataStoreHubEventStreamHandler : EventChannel.StreamHandler {
                 DataStoreChannelEventName.SUBSCRIPTION_DATA_PROCESSED.toString() -> {
                     try {
                         val eventData = hubEvent.data as ModelWithMetadata<*>
-                        if (eventData.model is SerializedModel) {
+                        val model = eventData.model
+                        if (model is SerializedModel) {
                             val message = FlutterSubscriptionDataProcessedEvent(
                                 hubEvent.name,
-                                eventData.model.modelName,
-                                eventData
+                                model,
+                                eventData.syncMetadata,
                             )
                             sendEvent(message.toValueMap())
                         } else {

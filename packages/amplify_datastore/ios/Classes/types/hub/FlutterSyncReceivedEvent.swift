@@ -42,7 +42,7 @@ struct FlutterSyncReceivedEvent: FlutterHubEvent {
         return [
             "eventName": self.eventName,
             "modelName": self.modelName,
-            "element": self.element.toValueMap() as Any
+            "element": self.element.toValueMap()
         ]
     }
 }

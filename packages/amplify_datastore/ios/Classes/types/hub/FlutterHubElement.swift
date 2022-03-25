@@ -26,7 +26,7 @@ public struct FlutterHubElement {
     var model: [String: Any]
     var version: Int?
     var lastChangedAt: Int?
-    var deleted: Bool?
+    var deleted: Bool
     
     init(
         hubElement: OutboxMutationEvent.OutboxMutationEventElement,
@@ -44,7 +44,7 @@ public struct FlutterHubElement {
         )
         self.version = hubElement.version
         self.lastChangedAt = hubElement.lastChangedAt
-        self.deleted = hubElement.deleted
+        self.deleted = hubElement.deleted ?? false
     }
 
     init(
@@ -54,19 +54,17 @@ public struct FlutterHubElement {
         modelName: String
     ) throws {
         do {
-            let decodedModel = try ModelRegistry.decode(modelName: modelName, from: hubElement.json) as! FlutterSerializedModel
+            guard let decodedModel = (try ModelRegistry.decode(modelName: modelName, from: hubElement.json) as? FlutterSerializedModel) else {
+                throw FlutterDataStoreError.hubEventCast
+            }
             model = try decodedModel.toMap(
                 modelSchemaRegistry: modelSchemaRegistry,
                 customTypeSchemaRegistry: customTypeSchemaRegistry,
                 modelName: modelName
             )
             self.version = hubElement.version
-            let serializedData = model["serializedData"] as! [String: Any]
-            if let value = serializedData["_deleted"] as? Bool {
-                self.deleted = value
-            } else if serializedData["_deleted"] == nil {
-                self.deleted = false
-            }
+            let serializedData = model["serializedData"] as? [String: Any] ?? [:]
+            self.deleted = serializedData["_deleted"] as? Bool ?? false
             if let value = serializedData["_lastChangedAt"] as? Double {
                 self.lastChangedAt = Int(value)
             } else if let value = serializedData["_lastChangedAt"] as? String {

@@ -19,8 +19,7 @@ import 'package:amplify_datastore_plugin_interface/amplify_datastore_plugin_inte
 
 import 'package:flutter/services.dart';
 
-EventChannel channel =
-    const EventChannel('com.amazonaws.amplify/datastore_hub_events');
+const channel = EventChannel('com.amazonaws.amplify/datastore_hub_events');
 late ModelProviderInterface modelProvider;
 StreamSubscription? eventStream;
 

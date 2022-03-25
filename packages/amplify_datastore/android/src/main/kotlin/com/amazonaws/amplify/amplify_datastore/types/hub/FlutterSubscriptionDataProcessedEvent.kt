@@ -18,28 +18,26 @@ package com.amazonaws.amplify.amplify_datastore.types.hub
 import com.amazonaws.amplify.amplify_datastore.types.model.FlutterSerializedModel
 import com.amplifyframework.core.model.Model
 import com.amplifyframework.core.model.SerializedModel
+import com.amplifyframework.datastore.appsync.ModelMetadata
 import com.amplifyframework.datastore.appsync.ModelWithMetadata
 
 class FlutterSubscriptionDataProcessedEvent(
     override val eventName: String,
-    private val modelName: String,
-    private val modelWithMetadata: ModelWithMetadata<out Model>
+    private val model: SerializedModel,
+    private val syncMetadata: ModelMetadata,
 ) : FlutterHubEvent {
     override fun toValueMap(): Map<String, Any> {
-        val serializedModel: MutableMap<String, Any> = FlutterSerializedModel(
-            this.modelWithMetadata.model as SerializedModel
-        ).toMap().toMutableMap()
         return mapOf(
-            "eventName" to this.eventName,
-            "modelName" to this.modelName,
+            "eventName" to eventName,
+            "modelName" to model.modelName,
             "element" to mapOf(
                 "syncMetadata" to mapOf(
-                    "id" to modelWithMetadata.syncMetadata.id,
-                    "_deleted" to modelWithMetadata.syncMetadata.isDeleted,
-                    "_version" to modelWithMetadata.syncMetadata.version,
-                    "_lastChangedAt" to modelWithMetadata.syncMetadata.lastChangedAt?.secondsSinceEpoch
+                    "id" to syncMetadata.id,
+                    "_deleted" to syncMetadata.isDeleted,
+                    "_version" to syncMetadata.version,
+                    "_lastChangedAt" to syncMetadata.lastChangedAt?.secondsSinceEpoch
                 ),
-                "model" to serializedModel
+                "model" to FlutterSerializedModel(model).toMap()
             )
         )
     }
