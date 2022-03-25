@@ -69,39 +69,29 @@ else
     fi
 fi
 
+TEST_ENTRIES="integration_test/separate_integration_tests/*.dart"
+for ENTRY in $TEST_ENTRIES; do
+    testsList+=("$ENTRY")
+    if [ $enableCloudSync == "true" ]; then
+        echo "Run $ENTRY WITH API Sync"
+    else
+        echo "Run $ENTRY WITHOUT API Sync"
+    fi
 
-SEPARATE_INTEGRATION_TESTS_PATH="integration_test/separate_integration_tests"
-if [ -d "${SEPARATE_INTEGRATION_TESTS_PATH}" ]
-then
-    TEST_ENTRIES=`ls ${SEPARATE_INTEGRATION_TESTS_PATH}/*.dart`
-
-    for ENTRY in $TEST_ENTRIES
-    do
-        testsList+=("$ENTRY")
-        if [ $enableCloudSync == "true" ]
-        then
-            echo "Run $ENTRY WITH API Sync"
-        else
-            echo "Run $ENTRY WITHOUT API Sync"
-        fi
-
-        if flutter test \
-            --no-pub \
-            --dart-define ENABLE_CLOUD_SYNC=$enableCloudSync \
-            -d iPhone \
-            $ENTRY; then
-            resultsList+=(0)
-        else
-            resultsList+=(1)
-        fi
-    done
-fi
+    if flutter test \
+        --no-pub \
+        --dart-define ENABLE_CLOUD_SYNC=$enableCloudSync \
+        -d $deviceId \
+        $ENTRY; then
+        resultsList+=(0)
+    else
+        resultsList+=(1)
+    fi
+done
 
 testFailure=0
 for i in "${!testsList[@]}"; do
-    resultPrint=""
-    if [ "${resultsList[i]}" == 0 ]
-    then
+    if [ "${resultsList[i]}" == 0 ]; then
         echo "✅ ${testsList[i]}"
     else
         testFailure=1
@@ -109,9 +99,4 @@ for i in "${!testsList[@]}"; do
     fi
 done
 
-if [ $testFailure -eq 1 ]
-then
-    exit 1
-else
-    exit 0
-fi
+exit $testFailure
