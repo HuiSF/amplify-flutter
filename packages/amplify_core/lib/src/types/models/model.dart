@@ -21,9 +21,13 @@ import 'model_schema_definition.dart';
 abstract class Model {
   ModelType getInstanceType();
 
+  @Deprecated(
+      '[getId] is being deprecated in favor of custom primary key feature. Use getter [modelIdentifier] to get model identifier.')
   String getId();
 
   Map<String, Object?> toJson();
+
+  ModelIdentifier get modelIdentifier;
 
   const Model();
 
@@ -72,4 +76,20 @@ abstract class ModelType<T extends Model> {
 
   @override
   int get hashCode => T.hashCode;
+}
+
+/// Model identifier presentation
+abstract class ModelIdentifier<T extends Model> {
+  const ModelIdentifier();
+
+  /// Serialize a model identifier as a map.
+  Map<String, dynamic> serializeAsMap();
+
+  /// Serialize a model identifier as a list of key-value pairs. The order of
+  /// key-value pairs presents primary key and sort keys.
+  List<Map<String, dynamic>> serializeAsList();
+
+  /// Serialize a model identifier into a single string in format:
+  /// <primaryKey>[#<sortKey>]
+  String serializeAsString();
 }

@@ -20,6 +20,7 @@ dependencies:
   flutter_test:
     sdk: flutter
   stream_transform: ^2.0.0
+  collection: ^1.15.0
 
 dev_dependencies:
   amplify_lints: ^1.0.0

@@ -17,19 +17,18 @@
 // Generated files can be excluded from analysis in analysis_options.yaml
 // For more info, see: https://dart.dev/guides/language/analysis-options#excluding-code-from-analysis
 
-// ignore_for_file: public_member_api_docs, file_names, unnecessary_new, prefer_if_null_operators, prefer_const_constructors, slash_for_doc_comments, annotate_overrides, non_constant_identifier_names, unnecessary_string_interpolations, prefer_adjacent_string_concatenation, unnecessary_const, dead_code
+// ignore_for_file: public_member_api_docs, file_names, unnecessary_new, prefer_if_null_operators, prefer_const_constructors, slash_for_doc_comments, annotate_overrides, non_constant_identifier_names, unnecessary_string_interpolations, prefer_adjacent_string_concatenation, unnecessary_const, dead_code, implicit_dynamic_parameter, implicit_dynamic_map_literal, implicit_dynamic_type
 
-import 'ModelProvider.dart';
 import 'package:amplify_core/amplify_core.dart';
 import 'package:flutter/foundation.dart';
 
-/// This is an auto generated class representing the PostTags type in your schema.
+/// This is an auto generated class representing the Warehouse type in your schema.
 @immutable
-class PostTags extends Model {
-  static const classType = _PostTagsModelType();
+class Warehouse extends Model {
+  static const classType = _WarehouseModelType();
   final String id;
-  final Post? _post;
-  final Tag? _tag;
+  final String? _name;
+  final String? _region;
   final TemporalDateTime? _createdAt;
   final TemporalDateTime? _updatedAt;
 
@@ -41,13 +40,9 @@ class PostTags extends Model {
   @override
   String getId() => id;
 
-  PostTagsModelIdentifier get modelIdentifier {
-    return PostTagsModelIdentifier(id: id);
-  }
-
-  Post get post {
+  WarehouseModelIdentifier get modelIdentifier {
     try {
-      return _post!;
+      return WarehouseModelIdentifier(id: id, name: _name!, region: _region!);
     } catch (e) {
       throw AmplifyCodeGenModelException(
           AmplifyExceptionMessages
@@ -58,9 +53,22 @@ class PostTags extends Model {
     }
   }
 
-  Tag get tag {
+  String get name {
     try {
-      return _tag!;
+      return _name!;
+    } catch (e) {
+      throw AmplifyCodeGenModelException(
+          AmplifyExceptionMessages
+              .codeGenRequiredFieldForceCastExceptionMessage,
+          recoverySuggestion: AmplifyExceptionMessages
+              .codeGenRequiredFieldForceCastRecoverySuggestion,
+          underlyingException: e.toString());
+    }
+  }
+
+  String get region {
+    try {
+      return _region!;
     } catch (e) {
       throw AmplifyCodeGenModelException(
           AmplifyExceptionMessages
@@ -79,16 +87,17 @@ class PostTags extends Model {
     return _updatedAt;
   }
 
-  const PostTags._internal(
-      {required this.id, required post, required tag, createdAt, updatedAt})
-      : _post = post,
-        _tag = tag,
+  const Warehouse._internal(
+      {required this.id, required name, required region, createdAt, updatedAt})
+      : _name = name,
+        _region = region,
         _createdAt = createdAt,
         _updatedAt = updatedAt;
 
-  factory PostTags({String? id, required Post post, required Tag tag}) {
-    return PostTags._internal(
-        id: id == null ? UUID.getUUID() : id, post: post, tag: tag);
+  factory Warehouse(
+      {String? id, required String name, required String region}) {
+    return Warehouse._internal(
+        id: id == null ? UUID.getUUID() : id, name: name, region: region);
   }
 
   bool equals(Object other) {
@@ -98,10 +107,10 @@ class PostTags extends Model {
   @override
   bool operator ==(Object other) {
     if (identical(other, this)) return true;
-    return other is PostTags &&
+    return other is Warehouse &&
         id == other.id &&
-        _post == other._post &&
-        _tag == other._tag;
+        _name == other._name &&
+        _region == other._region;
   }
 
   @override
@@ -111,10 +120,10 @@ class PostTags extends Model {
   String toString() {
     var buffer = StringBuffer();
 
-    buffer.write("PostTags {");
+    buffer.write("Warehouse {");
     buffer.write("id=" + "$id" + ", ");
-    buffer.write("post=" + (_post != null ? _post!.toString() : "null") + ", ");
-    buffer.write("tag=" + (_tag != null ? _tag!.toString() : "null") + ", ");
+    buffer.write("name=" + "$_name" + ", ");
+    buffer.write("region=" + "$_region" + ", ");
     buffer.write("createdAt=" +
         (_createdAt != null ? _createdAt!.format() : "null") +
         ", ");
@@ -125,21 +134,14 @@ class PostTags extends Model {
     return buffer.toString();
   }
 
-  PostTags copyWith({Post? post, Tag? tag}) {
-    return PostTags._internal(
-        id: id, post: post ?? this.post, tag: tag ?? this.tag);
+  Warehouse copyWith() {
+    return Warehouse._internal(id: id, name: name, region: region);
   }
 
-  PostTags.fromJson(Map<String, dynamic> json)
+  Warehouse.fromJson(Map<String, dynamic> json)
       : id = json['id'],
-        _post = json['post']?['serializedData'] != null
-            ? Post.fromJson(
-                Map<String, dynamic>.from(json['post']['serializedData']))
-            : null,
-        _tag = json['tag']?['serializedData'] != null
-            ? Tag.fromJson(
-                Map<String, dynamic>.from(json['tag']['serializedData']))
-            : null,
+        _name = json['name'],
+        _region = json['region'],
         _createdAt = json['createdAt'] != null
             ? TemporalDateTime.fromString(json['createdAt'])
             : null,
@@ -149,39 +151,35 @@ class PostTags extends Model {
 
   Map<String, dynamic> toJson() => {
         'id': id,
-        'post': _post?.toJson(),
-        'tag': _tag?.toJson(),
+        'name': _name,
+        'region': _region,
         'createdAt': _createdAt?.format(),
         'updatedAt': _updatedAt?.format()
       };
 
-  static final QueryField ID = QueryField(fieldName: "postTags.id");
-  static final QueryField POST = QueryField(
-      fieldName: "post",
-      fieldType: ModelFieldType(ModelFieldTypeEnum.model,
-          ofModelName: (Post).toString()));
-  static final QueryField TAG = QueryField(
-      fieldName: "tag",
-      fieldType: ModelFieldType(ModelFieldTypeEnum.model,
-          ofModelName: (Tag).toString()));
+  static final QueryField ID = QueryField(fieldName: "id");
+  static final QueryField NAME = QueryField(fieldName: "name");
+  static final QueryField REGION = QueryField(fieldName: "region");
   static var schema =
       Model.defineSchema(define: (ModelSchemaDefinition modelSchemaDefinition) {
-    modelSchemaDefinition.name = "PostTags";
-    modelSchemaDefinition.pluralName = "PostTags";
+    modelSchemaDefinition.name = "Warehouse";
+    modelSchemaDefinition.pluralName = "Warehouses";
+
+    modelSchemaDefinition.indexes = [
+      ModelIndex(fields: const ["id", "name", "region"], name: null)
+    ];
 
     modelSchemaDefinition.addField(ModelFieldDefinition.id());
 
-    modelSchemaDefinition.addField(ModelFieldDefinition.belongsTo(
-        key: PostTags.POST,
+    modelSchemaDefinition.addField(ModelFieldDefinition.field(
+        key: Warehouse.NAME,
         isRequired: true,
-        targetName: "postID",
-        ofModelName: (Post).toString()));
+        ofType: ModelFieldType(ModelFieldTypeEnum.string)));
 
-    modelSchemaDefinition.addField(ModelFieldDefinition.belongsTo(
-        key: PostTags.TAG,
+    modelSchemaDefinition.addField(ModelFieldDefinition.field(
+        key: Warehouse.REGION,
         isRequired: true,
-        targetName: "tagID",
-        ofModelName: (Tag).toString()));
+        ofType: ModelFieldType(ModelFieldTypeEnum.string)));
 
     modelSchemaDefinition.addField(ModelFieldDefinition.nonQueryField(
         fieldName: 'createdAt',
@@ -197,35 +195,44 @@ class PostTags extends Model {
   });
 }
 
-class _PostTagsModelType extends ModelType<PostTags> {
-  const _PostTagsModelType();
+class _WarehouseModelType extends ModelType<Warehouse> {
+  const _WarehouseModelType();
 
   @override
-  PostTags fromJson(Map<String, dynamic> jsonData) {
-    return PostTags.fromJson(jsonData);
+  Warehouse fromJson(Map<String, dynamic> jsonData) {
+    return Warehouse.fromJson(jsonData);
   }
 }
 
 /// This is an auto generated class representing the model identifier
-/// of [PostTags] in your schema.
+/// of [Warehouse] in your schema.
 @immutable
-class PostTagsModelIdentifier implements ModelIdentifier<PostTags> {
+class WarehouseModelIdentifier implements ModelIdentifier<Warehouse> {
   final String id;
+  final String name;
+  final String region;
 
-  /// Create an instance of PostTagsModelIdentifier using [id] the primary key.
-  const PostTagsModelIdentifier({required this.id});
+  /// Create an instance of WarehouseModelIdentifier using [id] the primary key.
+  /// And [name], [region] the sort keys.
+  const WarehouseModelIdentifier(
+      {required this.id, required this.name, required this.region});
 
-  Map<String, dynamic> serializeAsMap() => (<String, dynamic>{'id': id});
+  @override
+  Map<String, dynamic> serializeAsMap() =>
+      (<String, dynamic>{'id': id, 'name': name, 'region': region});
 
+  @override
   List<Map<String, dynamic>> serializeAsList() => serializeAsMap()
       .entries
       .map((entry) => (<String, dynamic>{entry.key: entry.value}))
       .toList();
 
+  @override
   String serializeAsString() => serializeAsMap().values.join('#');
 
   @override
-  String toString() => 'PostTagsModelIdentifier(id: $id)';
+  String toString() =>
+      'WarehouseModelIdentifier(id: $id, name: $name, region: $region)';
 
   @override
   bool operator ==(Object other) {
@@ -233,9 +240,12 @@ class PostTagsModelIdentifier implements ModelIdentifier<PostTags> {
       return true;
     }
 
-    return other is PostTagsModelIdentifier && id == other.id;
+    return other is WarehouseModelIdentifier &&
+        id == other.id &&
+        name == other.name &&
+        region == other.region;
   }
 
   @override
-  int get hashCode => id.hashCode;
+  int get hashCode => id.hashCode ^ name.hashCode ^ region.hashCode;
 }
