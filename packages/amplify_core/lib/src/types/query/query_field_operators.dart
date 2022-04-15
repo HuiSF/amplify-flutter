@@ -75,6 +75,8 @@ abstract class QueryFieldOperator<T> {
       return value.toSeconds();
     } else if (isEnum(value)) {
       return enumToString(value);
+    } else if (value is ModelIdentifier) {
+      return value.serializeAsList();
     }
 
     // TODO sanitize other types appropriately
