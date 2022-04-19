@@ -260,7 +260,7 @@ class DataStoreHubEventStreamHandlerTests: XCTestCase {
             "title": "Title 1"
         ]
         
-        let serializedModel = FlutterSerializedModel(id: uuid, map: try FlutterDataStoreRequestUtils.getJSONValue(modelMap))
+        let serializedModel = FlutterSerializedModel(map: try FlutterDataStoreRequestUtils.getJSONValue(modelMap), modelName: "Post")
         let outboxMutationEnqueuedEvent = OutboxMutationEvent.fromModelWithoutMetadata(modelName: "Post", model: serializedModel)
         let hubHandler = MockDataStoreHubHandler()
         hubHandler.setExpectation(outerExpect: expect)
@@ -272,7 +272,8 @@ class DataStoreHubEventStreamHandlerTests: XCTestCase {
         waitForExpectations(timeout: 1.0)
         hubHandler.onCancel(withArguments: nil)
     }
-    
+
+    // TODO custom primary fix this unit test when amplify-ios fix the underlying issue
     func test_hub_outboxMutationProcessedEvent_success() throws {
         let expect = expectation(description: "listener was invoked")
         class MockDataStoreHubHandler: DataStoreHubEventStreamHandler {
@@ -304,7 +305,7 @@ class DataStoreHubEventStreamHandlerTests: XCTestCase {
             "title": "Title 1"
         ]
         
-        let serializedModel = FlutterSerializedModel(id: uuid, map: try FlutterDataStoreRequestUtils.getJSONValue(modelMap))
+        let serializedModel = FlutterSerializedModel(map: try FlutterDataStoreRequestUtils.getJSONValue(modelMap), modelName: "Post")
         
         let syncMetadata = MutationSyncMetadata(id: uuid,
                                                 deleted: false,
