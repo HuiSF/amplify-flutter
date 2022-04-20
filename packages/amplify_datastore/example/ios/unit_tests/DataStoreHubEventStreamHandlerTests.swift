@@ -20,7 +20,7 @@ import Combine
 @testable import AWSPluginsCore
 @testable import amplify_datastore
 
-let testHubSchema: ModelSchema = ModelSchema.init(name: "Post")
+let testHubSchema: ModelSchema = SchemaData.PostSchema
 
 class DataStoreHubEventStreamHandlerTests: XCTestCase {
 
@@ -29,7 +29,7 @@ class DataStoreHubEventStreamHandlerTests: XCTestCase {
     var customTypeSchemaRegistry = FlutterSchemaRegistry()
 
     override func setUpWithError() throws {
-        modelSchemaRegistry.addModelSchema(modelName: "Post", modelSchema: testSchema)
+        modelSchemaRegistry.addModelSchema(modelName: "Post", modelSchema: testHubSchema)
         modelSchemaRegistry.registerModels(registry: ModelRegistry.self)
     }
     
@@ -273,7 +273,6 @@ class DataStoreHubEventStreamHandlerTests: XCTestCase {
         hubHandler.onCancel(withArguments: nil)
     }
 
-    // TODO custom primary fix this unit test when amplify-ios fix the underlying issue
     func test_hub_outboxMutationProcessedEvent_success() throws {
         let expect = expectation(description: "listener was invoked")
         class MockDataStoreHubHandler: DataStoreHubEventStreamHandler {
