@@ -15,6 +15,7 @@
 
 package com.amazonaws.amplify.amplify_datastore.types.query
 
+import com.amazonaws.amplify.amplify_core.cast
 import com.amazonaws.amplify.amplify_datastore.util.safeCastToList
 import com.amazonaws.amplify.amplify_datastore.util.safeCastToMap
 import com.amplifyframework.core.model.ModelSchema
@@ -137,12 +138,57 @@ class QueryPredicateBuilder {
                 }
             }
 
+            if (serializedMap.containsKey("queryByIdentifierOperation")) {
+                val queryByIdentifierOperation: Map<String, Any> =
+                    serializedMap["queryByIdentifierOperation"].safeCastToMap()!!
+                val operands = queryByIdentifierOperation["value"]
+
+                if (operands !is List<*>) {
+                    throw IllegalArgumentException(
+                        "A queryByIdentifierOperation must provide a list of operands"
+                    )
+                }
+
+                return when (queryByIdentifierOperation["operatorName"]) {
+                    "equal" -> convertQueryByIdentifierOperationToPredicate(operands.cast(), true)
+                    "not_equal" -> convertQueryByIdentifierOperationToPredicate(operands.cast(), false)
+                    else -> throw IllegalArgumentException(
+                        "Operator cannot be equal for a queryByIdentifierOperation"
+                    )
+                }
+            }
+
             return null
         }
 
         @JvmStatic
         fun fromSerializedMap(serializedMap: Map<String, Any>?): QueryPredicate? {
             return fromSerializedMap(serializedMap, null)
+        }
+
+        @JvmStatic
+        fun convertQueryByIdentifierOperationToPredicate(operands: List<Map<String, Any>>, isEqualOperator: Boolean):
+                QueryPredicate {
+            var predicates = operands.map {
+                val operandEntry = it.entries.first()
+                when {
+                    isEqualOperator -> QueryField.field(operandEntry.key).eq(operandEntry.value)
+                    else -> QueryField.field(operandEntry.key).ne(operandEntry.value)
+                }
+            }
+
+            if (predicates.size == 1) {
+                return predicates[0]
+            }
+
+            var predicateGroup: QueryPredicateGroup = predicates[0].and(predicates[1])
+            predicates = predicates.drop(2)
+
+            predicates.forEach { predicate ->
+                predicateGroup = predicateGroup.and(predicate)
+            }
+
+            return predicateGroup
         }
     }
 }
