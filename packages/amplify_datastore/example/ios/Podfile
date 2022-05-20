@@ -31,12 +31,22 @@ target 'Runner' do
   use_frameworks!
   use_modular_headers!
 
+  pod 'Amplify', :path => '/Users/zhohz/workspace/forks/amplify-ios'
+  pod 'AmplifyPlugins/AWSAPIPlugin', :path => '/Users/zhohz/workspace/forks/amplify-ios'
+  pod 'AmplifyPlugins/AWSDataStorePlugin', :path => '/Users/zhohz/workspace/forks/amplify-ios'
+  pod 'AWSPluginsCore', :path => '/Users/zhohz/workspace/forks/amplify-ios'
+
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 end
 
 target 'unit_tests' do
   use_frameworks!
   use_modular_headers!
+
+  pod 'Amplify', :path => '/Users/zhohz/workspace/forks/amplify-ios'
+  pod 'AmplifyPlugins/AWSAPIPlugin', :path => '/Users/zhohz/workspace/forks/amplify-ios'
+  pod 'AmplifyPlugins/AWSDataStorePlugin', :path => '/Users/zhohz/workspace/forks/amplify-ios'
+  pod 'AWSPluginsCore', :path => '/Users/zhohz/workspace/forks/amplify-ios'
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 end
