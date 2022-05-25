@@ -15,6 +15,7 @@
 
 package com.amazonaws.amplify.amplify_datastore.types.query
 
+import com.amazonaws.amplify.amplify_core.cast
 import com.amazonaws.amplify.amplify_datastore.postSchema
 import com.amazonaws.amplify.amplify_datastore.readMapFromFile
 import com.amplifyframework.core.model.query.predicate.QueryField
@@ -30,6 +31,10 @@ class QueryPredicateBuilderTest {
     private val rating: QueryField = QueryField.field("rating")
     private val created: QueryField = QueryField.field("created")
     private val blogID: QueryField = QueryField.field("blogID")
+    private val inventoryProductID = QueryField.field("productID")
+    private val inventoryName = QueryField.field("name")
+    private val inventoryWarehouseID = QueryField.field("warehouseID")
+    private val inventoryRegion = QueryField.field("region")
 
     @Test
     fun test_when_id_not_equals() {
@@ -39,7 +44,7 @@ class QueryPredicateBuilderTest {
                 readMapFromFile(
                     "query_predicate", "id_not_equals.json",
                     HashMap::class.java
-                ) as HashMap<String, Any>
+                ).cast()
             )
         )
     }
@@ -53,7 +58,7 @@ class QueryPredicateBuilderTest {
                     "query_predicate",
                     "rating_greater_or_equal.json",
                     HashMap::class.java
-                ) as HashMap<String, Any>
+                ).cast()
             )
         )
     }
@@ -67,7 +72,7 @@ class QueryPredicateBuilderTest {
                     "query_predicate",
                     "complex_nested.json",
                     HashMap::class.java
-                ) as HashMap<String, Any>
+                ).cast()
             )
         )
     }
@@ -84,7 +89,7 @@ class QueryPredicateBuilderTest {
                     "query_predicate",
                     "group_with_only_and.json",
                     HashMap::class.java
-                ) as HashMap<String, Any>
+                ).cast()
             )
         )
     }
@@ -98,7 +103,7 @@ class QueryPredicateBuilderTest {
                     "query_predicate",
                     "group_mixed_and_or.json",
                     HashMap::class.java
-                ) as HashMap<String, Any>
+                ).cast()
             )
         )
     }
@@ -112,7 +117,7 @@ class QueryPredicateBuilderTest {
                     "query_predicate",
                     "mixed_with_not.json",
                     HashMap::class.java
-                ) as HashMap<String, Any>
+                ).cast()
             )
         )
     }
@@ -128,7 +133,7 @@ class QueryPredicateBuilderTest {
                     "query_predicate",
                     "negate_complex_predicate.json",
                     HashMap::class.java
-                ) as HashMap<String, Any>
+                ).cast()
             )
         )
     }
@@ -142,7 +147,7 @@ class QueryPredicateBuilderTest {
                     "query_predicate",
                     "relation_field_lookup.json",
                     HashMap::class.java
-                ) as HashMap<String, Any>,
+                ).cast(),
                 postSchema
             )
         )
@@ -157,7 +162,75 @@ class QueryPredicateBuilderTest {
                     "query_predicate",
                     "query_predicate_constant_all.json",
                     HashMap::class.java
-                ) as HashMap<String, Any>
+                ).cast()
+            )
+        )
+    }
+
+    @Test
+    fun test_when_equals_model_identifier_used() {
+        Assert.assertEquals(
+            inventoryProductID.eq("product-id")
+                .and(inventoryName.eq("product-name"))
+                .and(inventoryWarehouseID.eq("warehouse-id"))
+                .and(inventoryRegion.eq("some region")),
+            QueryPredicateBuilder.fromSerializedMap(
+                readMapFromFile(
+                    "query_predicate", "model_identifier_equals.json",
+                    HashMap::class.java
+                ).cast()
+            )
+        )
+    }
+
+    @Test
+    fun test_when_not_equals_model_identifier_used() {
+        Assert.assertEquals(
+            inventoryProductID.ne("product-id")
+                .and(inventoryName.ne("product-name"))
+                .and(inventoryWarehouseID.ne("warehouse-id"))
+                .and(inventoryRegion.ne("some region")),
+            QueryPredicateBuilder.fromSerializedMap(
+                readMapFromFile(
+                    "query_predicate", "model_identifier_not_equals.json",
+                    HashMap::class.java
+                ).cast()
+            )
+        )
+    }
+
+    @Test
+    fun test_when_group_not_equals_model_identifier_used() {
+        Assert.assertEquals(
+            QueryPredicateGroup.not(
+                inventoryProductID.eq("product-id")
+                    .and(inventoryName.eq("product-name"))
+                    .and(inventoryWarehouseID.eq("warehouse-id"))
+                    .and(inventoryRegion.eq("some region"))
+            ),
+            QueryPredicateBuilder.fromSerializedMap(
+                readMapFromFile(
+                    "query_predicate", "model_identifier_group_not_equals.json",
+                    HashMap::class.java
+                ).cast()
+            )
+        )
+    }
+
+    @Test
+    fun test_when_group_equals_model_identifier_used() {
+        Assert.assertEquals(
+            QueryPredicateGroup.not(
+                inventoryProductID.ne("product-id")
+                    .and(inventoryName.ne("product-name"))
+                    .and(inventoryWarehouseID.ne("warehouse-id"))
+                    .and(inventoryRegion.ne("some region")),
+            ),
+            QueryPredicateBuilder.fromSerializedMap(
+                readMapFromFile(
+                    "query_predicate", "model_identifier_group_equals.json",
+                    HashMap::class.java
+                ).cast()
             )
         )
     }

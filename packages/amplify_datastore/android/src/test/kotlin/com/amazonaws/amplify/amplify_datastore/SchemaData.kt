@@ -22,6 +22,7 @@ import com.amplifyframework.core.model.CustomTypeSchema
 import com.amplifyframework.core.model.Model
 import com.amplifyframework.core.model.ModelAssociation
 import com.amplifyframework.core.model.ModelField
+import com.amplifyframework.core.model.ModelIndex
 import com.amplifyframework.core.model.ModelSchema
 import com.amplifyframework.core.model.SerializedModel
 import com.amplifyframework.core.model.temporal.Temporal
@@ -29,6 +30,12 @@ import com.amplifyframework.core.model.temporal.Temporal
 val postSchema = ModelSchema.builder()
     .name("Post")
     .pluralName("Posts")
+    .indexes(mapOf(
+        "byBlog" to ModelIndex.builder()
+            .indexName("byBlog")
+            .indexFieldNames(listOf("blogID"))
+            .build()
+    ))
     .fields(
         mapOf(
             "id" to
@@ -682,4 +689,50 @@ val personSchema = ModelSchema.builder()
                 .build()
         )
     )
+    .build()
+
+val inventorySchema = ModelSchema.builder()
+    .name("Inventory")
+    .pluralName("Inventories")
+    .modelClass(SerializedModel::class.java)
+    .indexes(mapOf(
+        "undefined" to ModelIndex.builder()
+            .indexName("undefined")
+            .indexFieldNames(listOf("productID", "name", "warehouseID", "region"))
+            .build()
+    ))
+    .fields(mapOf(
+        "productID" to ModelField.builder()
+            .name("productID")
+            .targetType("String")
+            .javaClassForValue(String::class.java)
+            .isRequired(true)
+            .isReadOnly(false)
+            .isArray(false)
+            .build(),
+        "name" to ModelField.builder()
+            .name("name")
+            .targetType("String")
+            .javaClassForValue(String::class.java)
+            .isRequired(true)
+            .isReadOnly(false)
+            .isArray(false)
+            .build(),
+        "warehouseID" to ModelField.builder()
+            .name("warehouseID")
+            .targetType("String")
+            .javaClassForValue(String::class.java)
+            .isRequired(true)
+            .isReadOnly(false)
+            .isArray(false)
+            .build(),
+        "region" to ModelField.builder()
+            .name("region")
+            .targetType("String")
+            .javaClassForValue(String::class.java)
+            .isRequired(true)
+            .isReadOnly(false)
+            .isArray(false)
+            .build()
+    ))
     .build()
