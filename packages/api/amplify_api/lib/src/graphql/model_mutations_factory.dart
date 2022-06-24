@@ -29,8 +29,11 @@ class ModelMutationsFactory extends ModelMutationsInterface {
 
   @override
   GraphQLRequest<T> delete<T extends Model>(T model, {QueryPredicate? where}) {
-    return deleteById(model.getInstanceType() as ModelType<T>, model.getId(),
-        where: where);
+    return deleteByModelIdentifier(
+      model.getInstanceType() as ModelType<T>,
+      model.modelIdentifier,
+      where: where,
+    );
   }
 
   @override
@@ -44,6 +47,28 @@ class ModelMutationsFactory extends ModelMutationsInterface {
     }; // Simpler input than other mutations so don't use helper.
     final variables = GraphQLRequestFactory.instance
         .buildVariablesForMutationRequest(input: input, condition: condition);
+
+    return GraphQLRequestFactory.instance.buildRequest(
+        variables: variables,
+        modelType: modelType,
+        requestType: GraphQLRequestType.mutation,
+        requestOperation: GraphQLRequestOperation.delete);
+  }
+
+  @override
+  GraphQLRequest<T> deleteByModelIdentifier<T extends Model>(
+    ModelType<T> modelType,
+    ModelIdentifier modelIdentifier, {
+    QueryPredicate? where,
+  }) {
+    final condition = GraphQLRequestFactory.instance
+        .queryPredicateToGraphQLFilter(where, modelType);
+
+    final variables =
+        GraphQLRequestFactory.instance.buildVariablesForMutationRequest(
+      input: modelIdentifier.serializeAsMap(),
+      condition: condition,
+    );
 
     return GraphQLRequestFactory.instance.buildRequest(
         variables: variables,

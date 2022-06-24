@@ -58,6 +58,21 @@ class ModelMutations {
         .deleteById<T>(modelType, id, where: where);
   }
 
+  /// Generates a request to delete a model that is with custom primary key
+  /// by model identifier.
+  ///
+  /// ```dart
+  /// final request = ModelMutations.deleteById(Todo.classType, todo.modelIdentifier);
+  /// ```
+  ///
+  /// An optional `where` parameter can be supplied as a condition for the deletion to be evaluated on the server.
+  static GraphQLRequest<T> deleteByModelIdentifier<T extends Model>(
+      ModelType<T> modelType, ModelIdentifier modelIdentifier,
+      {QueryPredicate? where}) {
+    return ModelMutationsFactory.instance
+        .deleteByModelIdentifier<T>(modelType, modelIdentifier, where: where);
+  }
+
   /// Generates a request to update a model instance.
   ///
   /// ```dart

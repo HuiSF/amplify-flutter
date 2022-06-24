@@ -39,6 +39,12 @@ abstract class ModelMutationsInterface {
   // DeleteById
   GraphQLRequest<T> deleteById<T extends Model>(
       ModelType<T> modelType, String id);
+
+  // DeleteByModelIdentifier
+  GraphQLRequest<T> deleteByModelIdentifier<T extends Model>(
+    ModelType<T> modelType,
+    ModelIdentifier modelIdentifier,
+  );
 }
 
 abstract class ModelSubscriptionsInterface {
