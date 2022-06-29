@@ -21,11 +21,12 @@ import 'dart:async';
 import 'package:amplify_datastore/amplify_datastore.dart';
 
 // Uncomment the below line to enable online sync
-// import 'package:amplify_api/amplify_api.dart';
+import 'package:amplify_api/amplify_api.dart';
 
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/services.dart';
 import 'models/ModelProvider.dart';
+import 'amplifyconfiguration.dart';
 
 part 'queries_display_widgets.dart';
 part 'save_model_widgets.dart';
@@ -84,10 +85,13 @@ class _MyAppState extends State<MyApp> {
   Future<void> initPlatformState() async {
     try {
       datastorePlugin = AmplifyDataStore(
-        modelProvider: ModelProvider.instance,
-        errorHandler: ((error) =>
-            {print("Custom ErrorHandler received: " + error.toString())}),
-      );
+          modelProvider: ModelProvider.instance,
+          errorHandler: ((error) =>
+              {print("Custom ErrorHandler received: " + error.toString())}),
+          syncExpressions: [
+            DataStoreSyncExpression(
+                Blog.classType, () => Blog.NAME.contains('1'))
+          ]);
       await Amplify.addPlugin(datastorePlugin);
 
       // Configure
@@ -104,34 +108,34 @@ class _MyAppState extends State<MyApp> {
     }
     listenToHub();
 
-    Amplify.DataStore.observeQuery(
-      Blog.classType,
-    ).listen((QuerySnapshot<Blog> snapshot) {
-      var count = snapshot.items.length;
-      var now = DateTime.now().toIso8601String();
-      bool status = snapshot.isSynced;
-      print(
-          '[Observe Query] Blog snapshot received with $count models, status: $status at $now');
-      setState(() {
-        _blogs = snapshot.items;
-      });
-    });
+    // Amplify.DataStore.observeQuery(
+    //   Blog.classType,
+    // ).listen((QuerySnapshot<Blog> snapshot) {
+    //   var count = snapshot.items.length;
+    //   var now = DateTime.now().toIso8601String();
+    //   bool status = snapshot.isSynced;
+    //   print(
+    //       '[Observe Query] Blog snapshot received with $count models, status: $status at $now');
+    //   setState(() {
+    //     _blogs = snapshot.items;
+    //   });
+    // });
 
-    Amplify.DataStore.observeQuery(
-      Post.classType,
-    ).listen((QuerySnapshot<Post> snapshot) {
-      setState(() {
-        _posts = snapshot.items;
-      });
-    });
+    // Amplify.DataStore.observeQuery(
+    //   Post.classType,
+    // ).listen((QuerySnapshot<Post> snapshot) {
+    //   setState(() {
+    //     _posts = snapshot.items;
+    //   });
+    // });
 
-    Amplify.DataStore.observeQuery(
-      Comment.classType,
-    ).listen((QuerySnapshot<Comment> snapshot) {
-      setState(() {
-        _comments = snapshot.items;
-      });
-    });
+    // Amplify.DataStore.observeQuery(
+    //   Comment.classType,
+    // ).listen((QuerySnapshot<Comment> snapshot) {
+    //   setState(() {
+    //     _comments = snapshot.items;
+    //   });
+    // });
 
     // setup streams
     postStream = Amplify.DataStore.observe(Post.classType);
@@ -144,25 +148,25 @@ class _MyAppState extends State<MyApp> {
           event.eventType.toString());
     }).onError((error) => print(error));
 
-    blogStream = Amplify.DataStore.observe(Blog.classType);
-    blogStream.listen((event) {
-      _blogStreamingData.add('Blog: ' +
-          (event.eventType.toString() == EventType.delete.toString()
-              ? event.item.id
-              : event.item.name) +
-          ', of type: ' +
-          event.eventType.toString());
-    }).onError((error) => print(error));
+    // blogStream = Amplify.DataStore.observe(Blog.classType);
+    // blogStream.listen((event) {
+    //   _blogStreamingData.add('Blog: ' +
+    //       (event.eventType.toString() == EventType.delete.toString()
+    //           ? event.item.id
+    //           : event.item.name) +
+    //       ', of type: ' +
+    //       event.eventType.toString());
+    // }).onError((error) => print(error));
 
-    commentStream = Amplify.DataStore.observe(Comment.classType);
-    commentStream.listen((event) {
-      _commentStreamingData.add('Comment: ' +
-          (event.eventType.toString() == EventType.delete.toString()
-              ? event.item.id
-              : event.item.content) +
-          ', of type: ' +
-          event.eventType.toString());
-    }).onError((error) => print(error));
+    // commentStream = Amplify.DataStore.observe(Comment.classType);
+    // commentStream.listen((event) {
+    //   _commentStreamingData.add('Comment: ' +
+    //       (event.eventType.toString() == EventType.delete.toString()
+    //           ? event.item.id
+    //           : event.item.content) +
+    //       ', of type: ' +
+    //       event.eventType.toString());
+    // }).onError((error) => print(error));
 
     setState(() {
       _isAmplifyConfigured = true;
@@ -300,6 +304,28 @@ class _MyAppState extends State<MyApp> {
 
             // Row for query buttons
             displayQueryButtons(_isAmplifyConfigured, this),
+
+            ElevatedButton(
+              onPressed: () async {
+                var parent =
+                    CpkHasManyParentBidirectionalExplicit(name: 'the parent');
+                var child = CpkHasManyChildBidirectionalExplicit(
+                    name: 'the child', hasManyParent: parent);
+
+                await Amplify.DataStore.save(parent);
+                await Amplify.DataStore.save(child);
+
+                final result = await Amplify.DataStore.query(
+                  CpkHasManyChildBidirectionalExplicit.classType,
+                  where: CpkHasManyChildBidirectionalExplicit.HASMANYPARENT.eq(
+                    parent.modelIdentifier,
+                  ),
+                );
+
+                print('🚀: $result');
+              },
+              child: const Text('Test CPK HasManyBiEx'),
+            ),
 
             Padding(padding: EdgeInsets.all(5.0)),
             Text("Listen to DataStore Hub"),

@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "serviceConfiguration": {
+    "apiName": "cpkintegrationtests",
+    "serviceName": "AppSync",
+    "gqlSchemaPath": "/Users/zhohz/workspace/forks/amplify-flutter-feature/packages/amplify_datastore/example/amplify/backend/api/cpkintegrationtests/schema.graphql",
+    "defaultAuthType": {
+      "mode": "API_KEY",
+      "expirationTime": 365,
+      "apiKeyExpirationDate": "2023-06-09T19:48:13.259Z",
+      "keyDescription": ""
+    },
+    "conflictResolution": {
+      "defaultResolutionStrategy": {
+        "type": "AUTOMERGE"
+      }
+    }
+  }
+}

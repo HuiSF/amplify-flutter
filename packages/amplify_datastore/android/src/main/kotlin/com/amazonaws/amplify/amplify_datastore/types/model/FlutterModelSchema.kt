@@ -63,6 +63,8 @@ data class FlutterModelSchema(val map: Map<String, Any>) {
             .associations(associations.mapValues { it.value.convertToNativeModelAssociation() })
             .modelClass(SerializedModel::class.java)
             .modelType(Model.Type.USER)
+            // testing only code remove before merge!!!!
+            .version(1)
             .build();
     }
 }
