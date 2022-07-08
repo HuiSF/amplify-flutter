@@ -63,6 +63,9 @@ data class FlutterModelSchema(val map: Map<String, Any>) {
             .associations(associations.mapValues { it.value.convertToNativeModelAssociation() })
             .modelClass(SerializedModel::class.java)
             .modelType(Model.Type.USER)
+            // to allow amplify-android correctly interpret custom primary key
+            // schema version needs to be >= 1
+            .version(1)
             .build();
     }
 }
