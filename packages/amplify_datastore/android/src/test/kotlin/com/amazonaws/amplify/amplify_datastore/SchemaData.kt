@@ -127,7 +127,7 @@ val postSchema = ModelSchema.builder()
             "blog" to
                     ModelAssociation.builder()
                         .name("BelongsTo")
-                        .targetName("blogID")
+                        .targetNames(listOf("blogID").toTypedArray())
                         .build(),
             "comments" to
                     ModelAssociation.builder()
@@ -139,6 +139,7 @@ val postSchema = ModelSchema.builder()
         )
     )
     .modelClass(SerializedModel::class.java)
+    .version(1)
     .build()
 
 val postAuthComplexSchema = ModelSchema.builder()
@@ -212,6 +213,7 @@ val postAuthComplexSchema = ModelSchema.builder()
         )
     )
     .modelClass(SerializedModel::class.java)
+    .version(1)
     .build()
 
 val postAuthComplexWithProviderUserPoolsSchema = ModelSchema.builder()
@@ -267,6 +269,7 @@ val postAuthComplexWithProviderUserPoolsSchema = ModelSchema.builder()
         )
     )
     .modelClass(SerializedModel::class.java)
+    .version(1)
     .build()
 
 val postAuthComplexWithProviderApiKeySchema = ModelSchema.builder()
@@ -312,6 +315,7 @@ val postAuthComplexWithProviderApiKeySchema = ModelSchema.builder()
         )
     )
     .modelClass(SerializedModel::class.java)
+    .version(1)
     .build()
 
 val commentSchema = ModelSchema.builder()
@@ -370,11 +374,12 @@ val commentSchema = ModelSchema.builder()
             "post" to
                     ModelAssociation.builder()
                         .name("BelongsTo")
-                        .targetName("postID")
+                        .targetNames(listOf("postID").toTypedArray())
                         .build()
         )
     )
     .modelClass(SerializedModel::class.java)
+    .version(1)
     .build()
 
 val blogSchema = ModelSchema.builder()
@@ -438,6 +443,7 @@ val blogSchema = ModelSchema.builder()
         )
     )
     .modelClass(SerializedModel::class.java)
+    .version(1)
     .build()
 
 val allTypeModelSchema = ModelSchema.builder()
@@ -547,6 +553,7 @@ val allTypeModelSchema = ModelSchema.builder()
         )
     )
     .modelClass(SerializedModel::class.java)
+    .version(1)
     .build()
 
 val phoneSchema = CustomTypeSchema.builder()
@@ -689,6 +696,7 @@ val personSchema = ModelSchema.builder()
                 .build()
         )
     )
+    .version(1)
     .build()
 
 val inventorySchema = ModelSchema.builder()
@@ -735,4 +743,120 @@ val inventorySchema = ModelSchema.builder()
             .isArray(false)
             .build()
     ))
+    .version(1)
+    .build()
+
+val cpkPostSchema = ModelSchema.builder()
+    .name("Post")
+    .pluralName("Posts")
+    .indexes(mapOf(
+        "byBlog" to ModelIndex.builder()
+            .indexName("byBlog")
+            .indexFieldNames(listOf("blogID"))
+            .build()
+    ))
+    .fields(
+        mapOf(
+            "id" to
+                    ModelField.builder()
+                        .name("id")
+                        .javaClassForValue(String::class.java)
+                        .targetType("String")
+                        .isRequired(true)
+                        .isArray(false)
+                        .build(),
+            "title" to
+                    ModelField.builder()
+                        .name("title")
+                        .javaClassForValue(String::class.java)
+                        .targetType("String")
+                        .isRequired(true)
+                        .isArray(false)
+                        .build(),
+
+            "created" to
+                    ModelField.builder()
+                        .name("created")
+                        .javaClassForValue(Temporal.DateTime::class.java)
+                        .targetType("AWSDateTime")
+                        .isRequired(false)
+                        .isArray(false)
+                        .build(),
+
+            "rating" to
+                    ModelField.builder()
+                        .name("rating")
+                        .javaClassForValue(Integer::class.java)
+                        .targetType("Integer")
+                        .isRequired(false)
+                        .isArray(false)
+                        .build(),
+
+            "blog" to
+                    ModelField.builder()
+                        .name("blog")
+                        .javaClassForValue(Model::class.java)
+                        .targetType("Blog")
+                        .isRequired(false)
+                        .isArray(false)
+                        .isModel(true)
+                        .build(),
+
+            "comments" to
+                    ModelField.builder()
+                        .name("comments")
+                        .javaClassForValue(List::class.java)
+                        .targetType("Comment")
+                        .isRequired(false)
+                        .isArray(true)
+                        .build(),
+
+            "likeCount" to
+                    ModelField.builder()
+                        .name("likeCount")
+                        .javaClassForValue(Integer::class.java)
+                        .targetType("Integer")
+                        .isRequired(false)
+                        .isArray(false)
+                        .build(),
+
+            "createdAt" to
+                    ModelField.builder()
+                        .name("createdAt")
+                        .javaClassForValue(Temporal.DateTime::class.java)
+                        .targetType("AWSDateTime")
+                        .isRequired(false)
+                        .isArray(false)
+                        .isReadOnly(true)
+                        .build(),
+
+            "updatedAt" to
+                    ModelField.builder()
+                        .name("updatedAt")
+                        .javaClassForValue(Temporal.DateTime::class.java)
+                        .targetType("AWSDateTime")
+                        .isRequired(false)
+                        .isArray(false)
+                        .isReadOnly(true)
+                        .build()
+        )
+    )
+    .associations(
+        mapOf(
+            "blog" to
+                    ModelAssociation.builder()
+                        .name("BelongsTo")
+                        .targetNames(listOf("blogID", "blogName").toTypedArray())
+                        .build(),
+            "comments" to
+                    ModelAssociation.builder()
+                        .name("HasMany")
+                        .associatedName("post")
+                        .associatedType("Post")
+                        .build()
+
+        )
+    )
+    .modelClass(SerializedModel::class.java)
+    .version(1)
     .build()

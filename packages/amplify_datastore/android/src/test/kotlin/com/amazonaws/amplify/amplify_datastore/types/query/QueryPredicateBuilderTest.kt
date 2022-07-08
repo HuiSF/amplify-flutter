@@ -16,8 +16,10 @@
 package com.amazonaws.amplify.amplify_datastore.types.query
 
 import com.amazonaws.amplify.amplify_core.cast
+import com.amazonaws.amplify.amplify_datastore.cpkPostSchema
 import com.amazonaws.amplify.amplify_datastore.postSchema
 import com.amazonaws.amplify.amplify_datastore.readMapFromFile
+import com.amplifyframework.core.model.ModelIdentifier
 import com.amplifyframework.core.model.query.predicate.QueryField
 import com.amplifyframework.core.model.query.predicate.QueryPredicateGroup
 import com.amplifyframework.core.model.query.predicate.QueryPredicateOperation.not
@@ -35,6 +37,7 @@ class QueryPredicateBuilderTest {
     private val inventoryName = QueryField.field("name")
     private val inventoryWarehouseID = QueryField.field("warehouseID")
     private val inventoryRegion = QueryField.field("region")
+    private val cpkBlogForeignKeyField = QueryField.field("@@blogForeignKey")
 
     @Test
     fun test_when_id_not_equals() {
@@ -231,6 +234,22 @@ class QueryPredicateBuilderTest {
                     "query_predicate", "model_identifier_group_equals.json",
                     HashMap::class.java
                 ).cast()
+            )
+        )
+    }
+
+    @Test
+    fun test_when_query_by_nested_model_identifier() {
+        Assert.assertEquals(
+            cpkBlogForeignKeyField.eq(ModelIdentifier.Helper.getIdentifier(
+                "123", listOf("the parent")
+            )),
+            QueryPredicateBuilder.fromSerializedMap(
+                readMapFromFile(
+                    "query_predicate", "query_by_nested_model_identifier.json",
+                    HashMap::class.java
+                ).cast(),
+                cpkPostSchema
             )
         )
     }
