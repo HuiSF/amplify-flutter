@@ -66,6 +66,7 @@ abstract class ApiKeyAmplifyAuthProvider extends AmplifyAuthProvider {
 
 abstract class TokenAmplifyAuthProvider extends AmplifyAuthProvider {
   Future<String> getLatestAuthToken();
+  Future<String> getIdentityId();
 
   @override
   Future<AWSBaseHttpRequest> authorizeRequest(
