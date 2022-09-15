@@ -15,28 +15,34 @@
 import 'package:amplify_core/amplify_core.dart';
 import 'package:amplify_storage_s3_dart/amplify_storage_s3_dart.dart';
 import 'package:amplify_storage_s3_dart/src/prefix_resolver/storage_access_level_aware_prefix_resolver.dart';
+import 'package:amplify_storage_s3_dart/src/storage_s3_service/storage_s3_service.dart';
 import 'package:meta/meta.dart';
 
 /// {@template amplify_storage_s3_dart.amplify_storage_s3_plugin_dart}
 /// The Dart S3 plugin the Amplify Storage Category.
 /// {@endtemplate}
-class AmplifyStorageS3Dart extends StoragePluginInterface {
+class AmplifyStorageS3Dart extends StoragePluginInterface
+    with AWSDebuggable, AWSLoggerMixin {
   /// {@macro amplify_storage_s3_dart.amplify_storage_s3_plugin_dart}
   AmplifyStorageS3Dart({
     String? delimiter,
     StorageS3PrefixResolver? prefixResolver,
+    @visibleForTesting DependencyManager? dependencyManagerOverride,
   })  : _delimiter = delimiter,
-        _prefixResolver = prefixResolver;
+        _prefixResolver = prefixResolver,
+        _dependencyManagerOverride = dependencyManagerOverride,
+        _dependencyManager = dependencyManagerOverride ?? DependencyManager();
 
   final String? _delimiter;
+  final DependencyManager _dependencyManager;
+  final DependencyManager? _dependencyManagerOverride;
 
-  // TODO(HuiSF): remove ignore when using this field
-  // ignore: unused_field
   late final S3PluginConfig _s3pluginConfig;
+  late final StorageS3Service _storageS3Service;
 
   StorageS3PrefixResolver? _prefixResolver;
 
-  /// Gets prefix resolver
+  /// Gets prefix resolver for testing
   @visibleForTesting
   StorageS3PrefixResolver? get prefixResolver => _prefixResolver;
 
@@ -69,19 +75,47 @@ class AmplifyStorageS3Dart extends StoragePluginInterface {
       identityProvider: identityProvider,
     );
 
-    // TODO(HuiSF): create S3Client instance with
-    //  * credentialsProvider
-    //  * _prefixResolver
-    //  * other fields
-    // final credentialsProvider = authProviderRepo
-    //     .getAuthProvider(APIAuthorizationType.iam.authProviderToken);
+    final credentialsProvider = authProviderRepo
+        .getAuthProvider(APIAuthorizationType.iam.authProviderToken);
+
+    if (credentialsProvider == null) {
+      throw const StorageException(
+        'No credential provider found for Storage.',
+        recoverySuggestion:
+            'If you haven\'t already, please add amplify_auth_cognito plugin to your App.',
+      );
+    }
+
+    //`_dependencyManagerOverride` should be available only in unit tests
+    if (_dependencyManagerOverride == null) {
+      _storageS3Service = StorageS3Service(
+        credentialsProvider: credentialsProvider,
+        defaultBucket: _s3pluginConfig.bucket,
+        defaultRegion: _s3pluginConfig.region,
+        prefixResolver: _prefixResolver!,
+        logger: logger,
+      );
+      _dependencyManager.addInstance<StorageS3Service>(_storageS3Service);
+    }
   }
 
   @override
   StorageListOperation list({
     required StorageListRequest request,
   }) {
-    throw UnimplementedError();
+    final s3Request = StorageS3ListRequest.fromStorageListRequest(request);
+    final s3Service = _dependencyManager.getOrCreate<StorageS3Service>();
+
+    return StorageS3ListOperation(
+      request: s3Request,
+      result: s3Service.list(
+        path: request.path ?? '',
+        options: s3Request.options ??
+            StorageS3ListOptions(
+              storageAccessLevel: _s3pluginConfig.defaultAccessLevel,
+            ),
+      ),
+    );
   }
 
   @override
@@ -121,4 +155,7 @@ class AmplifyStorageS3Dart extends StoragePluginInterface {
 
   // TODO(HuiSF): add interface for remaining APIs
   //  uploadFile, downloadFile, downloadData
+
+  @override
+  String get runtimeTypeName => 'AmplifyStorageS3Dart';
 }

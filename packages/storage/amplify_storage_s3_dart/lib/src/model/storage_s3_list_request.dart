@@ -13,26 +13,26 @@
 // limitations under the License.
 
 import 'package:amplify_core/amplify_core.dart';
+import 'package:amplify_storage_s3_dart/src/model/storage_s3_list_options.dart';
+import 'package:meta/meta.dart';
 
-/// {@template amplify_core.storage.list_result}
-/// Presents the result of a [StorageListOperation].
+/// {@template storage.amplify_storage_s3.list_request}
+/// This defines the request sent to Storage S3 plugin `list` API.
 /// {@endtemplate}
-class StorageListResult<Items extends List<StorageItem>> {
-  /// {@macro amplify_core.storage.list_result}
-  const StorageListResult(
-    this.items, {
-    required this.hasNext,
-    required Future<StorageListResult<Items>> Function() next,
-  }) : _next = next;
+class StorageS3ListRequest extends StorageListRequest<StorageS3ListOptions> {
+  /// {@macro storage.amplify_storage_s3.list_request}
+  StorageS3ListRequest({
+    super.path,
+    super.options,
+  });
 
-  /// The objects listed in the current page.
-  final Items items;
-
-  /// Flag that indicates if there is any more page can be listed.
-  final bool hasNext;
-
-  /// Function to list the next page.
-  Future<StorageListResult<Items>> Function() get next => _next;
-
-  final Future<StorageListResult<Items>> Function() _next;
+  @internal
+  factory StorageS3ListRequest.fromStorageListRequest(
+    StorageListRequest request,
+  ) {
+    return StorageS3ListRequest(
+      path: request.path,
+      options: request.options as StorageS3ListOptions?,
+    );
+  }
 }

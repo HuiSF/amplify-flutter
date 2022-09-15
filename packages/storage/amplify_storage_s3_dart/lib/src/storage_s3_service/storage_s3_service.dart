@@ -12,14 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/// Amplify Storage S3 for Dart
-library amplify_storage_s3_dart;
+library s3_storage_service;
 
-export 'src/amplify_storage_s3_dart_impl.dart';
-
-export 'src/exception/storage_s3_exception.dart';
-
-export 'src/model/storage_s3_models.dart';
-
-export 'src/prefix_resolver/pass_through_prefix_resolver.dart';
-export 'src/prefix_resolver/storage_s3_prefix_resolver.dart';
+export 'service/storage_s3_service_impl.dart';

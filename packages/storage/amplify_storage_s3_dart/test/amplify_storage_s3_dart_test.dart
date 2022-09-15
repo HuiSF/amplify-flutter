@@ -15,8 +15,11 @@
 import 'package:amplify_core/amplify_core.dart';
 import 'package:amplify_storage_s3_dart/amplify_storage_s3_dart.dart';
 import 'package:amplify_storage_s3_dart/src/prefix_resolver/storage_access_level_aware_prefix_resolver.dart';
+import 'package:amplify_storage_s3_dart/src/storage_s3_service/storage_s3_service.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:test/test.dart';
 
+import 'utils/mocks.dart';
 import 'utils/test_token_provider.dart';
 
 class TestCustomPrefixResolver extends StorageS3PrefixResolver {
@@ -36,25 +39,30 @@ class TestCustomPrefixResolver extends StorageS3PrefixResolver {
   }
 }
 
-const testConfig = AmplifyConfig(
-  storage: StorageConfig(
-    plugins: {
-      S3PluginConfig.pluginKey: S3PluginConfig(
-        bucket: '123',
-        region: 'west-2',
-        defaultAccessLevel: StorageAccessLevel.guest,
-      )
-    },
-  ),
-);
-
-final testAuthProviderRepo = AmplifyAuthProviderRepository()
-  ..registerAuthProvider(
-    APIAuthorizationType.userPools.authProviderToken,
-    TestTokenProvider(),
+void main() {
+  const testDefaultStorageAccessLevel = StorageAccessLevel.private;
+  const testConfig = AmplifyConfig(
+    storage: StorageConfig(
+      plugins: {
+        S3PluginConfig.pluginKey: S3PluginConfig(
+          bucket: '123',
+          region: 'west-2',
+          defaultAccessLevel: testDefaultStorageAccessLevel,
+        )
+      },
+    ),
   );
 
-void main() {
+  final testAuthProviderRepo = AmplifyAuthProviderRepository()
+    ..registerAuthProvider(
+      APIAuthorizationType.userPools.authProviderToken,
+      TestTokenIdentityProvider(),
+    )
+    ..registerAuthProvider(
+      APIAuthorizationType.iam.authProviderToken,
+      TestIamAuthProvider(),
+    );
+
   group('AmplifyStorageS3Dart', () {
     test('constructor should take in custom prefix resolver', () {
       final s3Plugin = AmplifyStorageS3Dart(
@@ -93,6 +101,108 @@ void main() {
           APIAuthorizationType.userPools.authProviderToken,
         ),
       );
+    });
+  });
+
+  group('AmplifyStorageS3Dart API', () {
+    late DependencyManager dependencyManager;
+    late AmplifyStorageS3Dart storageS3Plugin;
+    late StorageS3Service storageS3Service;
+
+    setUp(() async {
+      storageS3Service = MockStorageS3Service();
+      dependencyManager = DependencyManager()
+        ..addInstance<StorageS3Service>(storageS3Service);
+      storageS3Plugin = AmplifyStorageS3Dart(
+        dependencyManagerOverride: dependencyManager,
+      );
+      await storageS3Plugin.configure(
+        config: testConfig,
+        authProviderRepo: testAuthProviderRepo,
+      );
+    });
+
+    tearDown(() {
+      dependencyManager.close();
+    });
+
+    group('list()', () {
+      const testPath = 'some/path';
+      final testResult = StorageS3ListResult(
+        <StorageS3Item>[],
+        hasNext: false,
+        next: () async {
+          return StorageS3ListResult(
+            [],
+            hasNext: false,
+            next: () async {
+              throw UnimplementedError();
+            },
+          );
+        },
+      );
+
+      setUpAll(() {
+        registerFallbackValue(MockStorageS3ListOptions());
+      });
+
+      test('should forward request to StorageS3Service.list() API', () async {
+        const testOptions = StorageS3ListOptions(
+          pageSize: 10,
+          storageAccessLevel: StorageAccessLevel.private,
+        );
+        final testRequest = StorageS3ListRequest(
+          path: testPath,
+          options: testOptions,
+        );
+
+        when(
+          () => storageS3Service.list(
+            path: testPath,
+            options: testOptions,
+          ),
+        ).thenAnswer(
+          (_) => Future.value(testResult),
+        );
+
+        final operation = storageS3Plugin.list(request: testRequest);
+        verify(
+          () => storageS3Service.list(path: testPath, options: testOptions),
+        ).called(1);
+
+        final result = await operation.result;
+        expect(result, testResult);
+      });
+
+      test(
+          'should forward default StorageS3Options with default StorageAccessLevel to StorageS3Service.list() API',
+          () {
+        final testRequest = StorageS3ListRequest(path: testPath);
+
+        when(
+          () => storageS3Service.list(
+            path: testPath,
+            options: any(named: 'options'),
+          ),
+        ).thenAnswer(
+          (_) => Future.value(testResult),
+        );
+
+        storageS3Plugin.list(request: testRequest);
+
+        final capturedOptions = verify(
+          () => storageS3Service.list(
+            path: testPath,
+            options: captureAny<StorageS3ListOptions>(named: 'options'),
+          ),
+        ).captured.last;
+
+        expect(capturedOptions is StorageS3ListOptions, isTrue);
+        expect(
+          (capturedOptions as StorageS3ListOptions).storageAccessLevel,
+          testDefaultStorageAccessLevel,
+        );
+      });
     });
   });
 }

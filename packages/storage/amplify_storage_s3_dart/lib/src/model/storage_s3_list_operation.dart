@@ -12,14 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/// Amplify Storage S3 for Dart
-library amplify_storage_s3_dart;
+import 'package:amplify_core/amplify_core.dart';
+import 'package:amplify_storage_s3_dart/amplify_storage_s3_dart.dart';
 
-export 'src/amplify_storage_s3_dart_impl.dart';
-
-export 'src/exception/storage_s3_exception.dart';
-
-export 'src/model/storage_s3_models.dart';
-
-export 'src/prefix_resolver/pass_through_prefix_resolver.dart';
-export 'src/prefix_resolver/storage_s3_prefix_resolver.dart';
+/// {@template storage.amplify_storage_s3.list_operation}
+/// This presents an operation create invoking Storage S3 plugin `list` API.
+/// {@endtemplate}
+class StorageS3ListOperation
+    extends StorageListOperation<StorageS3ListRequest, StorageS3ListResult> {
+  /// {@macro storage.amplify_storage_s3.list_operation}
+  StorageS3ListOperation({
+    required super.request,
+    required super.result,
+  });
+}
