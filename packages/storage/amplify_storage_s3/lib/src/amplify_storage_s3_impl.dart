@@ -32,6 +32,10 @@ class AmplifyStorageS3 extends AmplifyStorageS3Dart {
       StorageGetUrlOptions,
       StorageUploadDataOperation,
       StorageUploadDataOptions,
+      StorageDownloadDataOperation,
+      StorageDownloadDataOptions,
+      StorageDownloadFileOperation,
+      StorageDownloadFileOptions,
       StorageCopyOperation,
       StorageCopyOptions,
       StorageMoveOperation,
@@ -41,6 +45,7 @@ class AmplifyStorageS3 extends AmplifyStorageS3Dart {
       StorageRemoveManyOperation,
       StorageRemoveManyOptions,
       StorageItem,
+      StorageTransferProgress,
       AmplifyStorageS3Dart> pluginKey = _AmplifyStorageS3PluginKey();
 }
 
@@ -54,6 +59,10 @@ class _AmplifyStorageS3PluginKey extends StoragePluginKey<
     StorageGetUrlOptions,
     StorageUploadDataOperation,
     StorageUploadDataOptions,
+    StorageDownloadDataOperation,
+    StorageDownloadDataOptions,
+    StorageDownloadFileOperation,
+    StorageDownloadFileOptions,
     StorageCopyOperation,
     StorageCopyOptions,
     StorageMoveOperation,
@@ -63,6 +72,7 @@ class _AmplifyStorageS3PluginKey extends StoragePluginKey<
     StorageRemoveManyOperation,
     StorageRemoveManyOptions,
     StorageItem,
+    StorageTransferProgress,
     AmplifyStorageS3Dart> {
   const _AmplifyStorageS3PluginKey();
 

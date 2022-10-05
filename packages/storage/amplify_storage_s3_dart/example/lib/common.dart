@@ -24,7 +24,10 @@ Future<void> configureAmplify() async {
   final secureStorage = AmplifySecureStorageDart(
     config: AmplifySecureStorageConfig(
       scope: 'auth',
-      macOSOptions: MacOSSecureStorageOptions(useDataProtection: false),
+      // macOSOptions: MacOSSecureStorageOptions(useDataProtection: false),
+      webOptions: WebSecureStorageOptions(
+        persistenceOption: WebPersistenceOption.inMemory,
+      ),
     ),
   );
 

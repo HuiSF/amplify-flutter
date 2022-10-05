@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import 'package:amplify_core/amplify_core.dart';
+import 'package:amplify_storage_s3_dart/amplify_storage_s3_dart.dart';
 import 'package:smithy/smithy.dart';
 
 const _fileIssueMessage =
@@ -56,9 +57,9 @@ class S3StorageException extends StorageException {
 
   /// Creates a [S3StorageException] that represents an error that shouldn't
   /// happen normally.
-  factory S3StorageException.unknownException() {
-    return const S3StorageException(
-      'Unknown exception occurred.',
+  factory S3StorageException.unknownException([String? extraMessage]) {
+    return S3StorageException(
+      'Unknown exception occurred. $extraMessage',
       recoverySuggestion: _fileIssueMessage,
     );
   }
@@ -70,6 +71,50 @@ class S3StorageException extends StorageException {
       'Unknown service exception occurred.',
       recoverySuggestion: _fileIssueMessage,
       underlyingException: exception,
+    );
+  }
+
+  /// Creates a [S3StorageException] that represents an unexpected error
+  /// when download operation doesn't receive all bytes when download completes.
+  factory S3StorageException.incompleteDownload() {
+    return const S3StorageException(
+      'Download has completed, but it has not received all bytes of content.',
+      recoverySuggestion: _fileIssueMessage,
+    );
+  }
+
+  /// Creates a [S3StorageException] that represents an unexpected error
+  /// when service API call doesn't return a valid content-length header.
+  factory S3StorageException.unexpectedContentLengthFromService() {
+    return const S3StorageException(
+      'Service has not returned a valid content length for requested object.',
+      recoverySuggestion: _fileIssueMessage,
+    );
+  }
+
+  /// Creates a [S3StorageException] that represents an expected exception
+  /// thrown when invoke cancel() on an eligible storage operation object.
+  factory S3StorageException.controllableOperationCanceled() {
+    return const S3StorageException(
+      'The requested operation has been canceled.',
+      recoverySuggestion:
+          'This is an expected exception when you call cancel() API on the storage operation object. You need to handle this exception to take further action on operation cancellation.',
+    );
+  }
+
+  /// An exception when attempt to create an invalid [S3DataBytesRange].
+  factory S3StorageException.invalidBytesRange() {
+    return const S3StorageException(
+      'Invalid bytes range of `S3DataBytesRange`.',
+      recoverySuggestion: '`start` needs to be less than or equal to `end`.',
+    );
+  }
+
+  /// An exception when the `body` returned from GetObject is unexpectedly null.
+  factory S3StorageException.unexpectedGetObjectBody() {
+    return const S3StorageException(
+      'Unexpected null body from GetObject.',
+      recoverySuggestion: _fileIssueMessage,
     );
   }
 

@@ -8,7 +8,26 @@ html, body {
   font-family: 'Roboto', sans-serif;
 }
 
+#app-container {
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto;
+  width: 600px;
+}
+
 #output {
+  width: 100%;
   padding: 20px;
   text-align: center;
+}
+
+#sign-in-form {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+#sign-in-form > div {
+  padding: 10px 0;
 }

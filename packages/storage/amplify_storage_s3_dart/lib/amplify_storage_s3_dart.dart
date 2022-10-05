@@ -15,7 +15,9 @@
 /// Amplify Storage S3 for Dart
 library amplify_storage_s3_dart;
 
-export 'src/amplify_storage_s3_dart_impl.dart';
+export 'src/amplify_storage_s3_dart_stub.dart'
+    if (dart.library.html) 'src/amplify_storage_s3_dart_html.dart'
+    if (dart.library.io) 'src/amplify_storage_s3_dart_io.dart';
 
 export 'src/exception/s3_storage_exception.dart';
 

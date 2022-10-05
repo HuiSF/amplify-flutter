@@ -325,7 +325,14 @@ class GetObjectOperation extends _i1.HttpOperation<_i2.GetObjectRequestPayload,
         }
       });
   @override
-  int successCode([_i4.GetObjectOutput? output]) => 200;
+  int successCode([_i4.GetObjectOutput? output]) {
+    if (output?.contentRange != null) {
+      return 206;
+    }
+
+    return 200;
+  }
+
   @override
   _i4.GetObjectOutput buildOutput(_i3.Stream<List<int>>? payload,
           _i8.AWSStreamedHttpResponse response) =>
