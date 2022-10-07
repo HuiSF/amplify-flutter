@@ -37,6 +37,12 @@ class S3StorageException extends StorageException {
     UnknownSmithyHttpException exception,
   ) {
     switch (exception.statusCode) {
+      case 400:
+        return S3StorageException(
+          'Invalid API call parameters',
+          recoverySuggestion: _fileIssueMessage,
+          underlyingException: exception,
+        );
       case 403:
         return S3StorageException(
           'S3 access denied when making the API call.',

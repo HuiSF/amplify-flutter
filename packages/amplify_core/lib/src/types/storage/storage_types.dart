@@ -21,6 +21,8 @@ export 'copy_options.dart';
 export 'copy_request.dart';
 export 'copy_result.dart';
 
+export 'data_payload.dart';
+
 export 'get_properties_operation.dart';
 export 'get_properties_options.dart';
 export 'get_properties_request.dart';

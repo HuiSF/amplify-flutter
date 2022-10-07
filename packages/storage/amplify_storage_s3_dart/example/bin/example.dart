@@ -50,8 +50,9 @@ Future<void> main() async {
   while (true) {
     final operation = prompt('''Choose an operation:
 1. list        2. getProperties
-3. getUrl      4. copy
-5. move        6. remove
+3. getUrl      4. upload data url
+5. copy        6. move
+7. remove
 0. exit
 ''');
     final operationNum = int.tryParse(operation);
@@ -67,12 +68,15 @@ Future<void> main() async {
         await getUrlOperation();
         break;
       case 4:
-        await copyOperation();
+        await uploadDataUrlOperation();
         break;
       case 5:
-        await moveOperation();
+        await copyOperation();
         break;
       case 6:
+        await moveOperation();
+        break;
+      case 7:
         await removeOperation();
         break;
       case null:
@@ -184,6 +188,39 @@ Future<void> getUrlOperation() async {
     stdout
       ..writeln('Generated url for key: $key, the url expires in 10 minutes:')
       ..writeln(result.url.toString());
+  } on Exception catch (error) {
+    stderr
+      ..writeln('Something went wrong...')
+      ..writeln(error);
+  }
+}
+
+Future<void> uploadDataUrlOperation() async {
+  final dataUrl = prompt('Enter the data url to upload: ');
+  final key = prompt('Enter the object key to upload the data url to: ');
+  final storageAccessLevel = promptStorageAccessLevel(
+    'Choose the storage access level associated with the object to upload: ',
+  );
+
+  final s3Plugin = Amplify.Storage.getPlugin(AmplifyStorageS3Dart.pluginKey);
+  final uploadDataOperation = s3Plugin.uploadData(
+    data: S3StorageDataPayload.dataUrl(dataUrl),
+    key: key,
+    options: S3StorageUploadDataOptions(
+      storageAccessLevel: storageAccessLevel,
+      getProperties: true,
+    ),
+  );
+
+  try {
+    stdout.writeln('Uploading...');
+    final result = await uploadDataOperation.result;
+    stdout
+      ..writeln('Uploaded data url: ')
+      ..writeln('key: ${result.uploadedItem.key}')
+      ..writeln('size: ${result.uploadedItem.size}')
+      ..writeln('lastModified: ${result.uploadedItem.lastModified}')
+      ..writeln('eTag: ${result.uploadedItem.eTag}');
   } on Exception catch (error) {
     stderr
       ..writeln('Something went wrong...')

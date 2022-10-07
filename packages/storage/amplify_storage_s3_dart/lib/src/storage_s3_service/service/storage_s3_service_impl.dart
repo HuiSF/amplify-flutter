@@ -57,8 +57,9 @@ class StorageS3Service {
             ? AWSSigV4Signer(credentialsProvider: credentialsProvider)
             : dependencyManagerOverride.expect();
 
-  static const _defaultS3ClientConfig = S3ClientConfig();
-  static final _defaultS3SignerConfiguration = S3ServiceConfiguration();
+  static final _defaultS3ClientConfig = S3ClientConfig(
+    signerConfiguration: S3ServiceConfiguration(signPayload: false),
+  );
 
   final String _defaultBucket;
   final String _defaultRegion;
@@ -178,8 +179,53 @@ class StorageS3Service {
         urlRequest,
         credentialScope: _signerScope,
         expiresIn: options.expiresIn,
-        serviceConfiguration: _defaultS3SignerConfiguration,
+        serviceConfiguration: _defaultS3ClientConfig.signerConfiguration!,
       ),
+    );
+  }
+
+  Future<S3StorageUploadDataResult> uploadData({
+    required S3StorageDataPayload data,
+    required String key,
+    required S3StorageUploadDataOptions options,
+  }) async {
+    final resolvedPrefix = await _getResolvedPrefix(
+      storageAccessLevel: options.storageAccessLevel,
+    );
+
+    final keyToUpload = '$resolvedPrefix$key';
+
+    final uploadRequest = s3.PutObjectRequest.build((builder) {
+      builder
+        ..bucket = _defaultBucket
+        ..body = data
+        ..contentEncoding = data.contentEncoding
+        ..contentType = data.contentType
+        ..key = keyToUpload
+        ..acl = s3.ObjectCannedAcl.bucketOwnerFullControl
+        ..metadata.addAll(options.metadata ?? const {});
+    });
+
+    late s3.PutObjectOutput uploadResult;
+
+    try {
+      uploadResult = await _defaultS3Client.putObject(uploadRequest);
+    } on smithy.UnknownSmithyHttpException catch (error) {
+      // S3Client.putObject may return 400, 403 error
+      throw S3StorageException.fromUnknownSmithyHttpException(error);
+    }
+
+    return S3StorageUploadDataResult(
+      uploadedItem: options.getProperties
+          ? S3StorageItem.fromHeadObjectOutput(
+              await _headObject(bucket: _defaultBucket, key: keyToUpload),
+              key: key,
+            )
+          : S3StorageItem(
+              key: key,
+              eTag: uploadResult.eTag,
+              versionId: uploadResult.versionId,
+            ),
     );
   }
 

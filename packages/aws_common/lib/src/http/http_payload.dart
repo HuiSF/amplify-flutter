@@ -46,7 +46,9 @@ class HttpPayload extends StreamView<List<int>> {
   }
 
   /// An empty HTTP body.
-  const HttpPayload.empty({this.contentType}) : super(const Stream.empty());
+  const HttpPayload.empty({this.contentType})
+      : contentEncoding = null,
+        super(const Stream.empty());
 
   /// A UTF-8 encoded HTTP body.
   HttpPayload.string(
@@ -54,12 +56,14 @@ class HttpPayload extends StreamView<List<int>> {
     Encoding encoding = utf8,
     String? contentType,
   })  : contentType = contentType ?? 'text/plain; charset=${encoding.name}',
+        contentEncoding = null,
         super(LazyStream(() => Stream.value(encoding.encode(body))));
 
   /// A byte buffer HTTP body.
   HttpPayload.bytes(
     List<int> body, {
     this.contentType,
+    this.contentEncoding,
   }) : super(Stream.value(body));
 
   /// A form-encoded body of `key=value` pairs.
@@ -69,6 +73,7 @@ class HttpPayload extends StreamView<List<int>> {
     String? contentType,
   })  : contentType = contentType ??
             'application/x-www-form-urlencoded; charset=${encoding.name}',
+        contentEncoding = null,
         super(
           LazyStream(
             () => Stream.value(
@@ -84,6 +89,7 @@ class HttpPayload extends StreamView<List<int>> {
     String? contentType,
   })  : contentType =
             contentType ?? 'application/json; charset=${encoding.name}',
+        contentEncoding = null,
         super(
           LazyStream(
             () => Stream.value(encoding.encode(json.encode(body))),
@@ -94,10 +100,38 @@ class HttpPayload extends StreamView<List<int>> {
   const HttpPayload.streaming(
     super.body, {
     this.contentType,
-  });
+  }) : contentEncoding = null;
+
+  /// A data url HTTP body.
+  factory HttpPayload.dataUrl(String dataUrl) {
+    if (!dataUrl.startsWith(_dataUrlMatcher)) {
+      throw ArgumentError('Invalid data url: $dataUrl');
+    }
+
+    final dataUrlParts = dataUrl.split(',');
+    final mediaTypeEncoding = dataUrlParts[0].replaceFirst('data:', '');
+    final body = dataUrlParts[1];
+
+    if (mediaTypeEncoding.isNotEmpty && mediaTypeEncoding.endsWith(';base64')) {
+      return HttpPayload.bytes(
+        base64Decode(body),
+        contentType: mediaTypeEncoding.replaceFirst(';base64', ''),
+        contentEncoding: 'base64',
+      );
+    }
+
+    return HttpPayload.bytes(
+      // data url encodes body, need to decode before converting it into bytes
+      Uri.decodeComponent(body).codeUnits,
+      contentType: mediaTypeEncoding,
+    );
+  }
 
   /// The content type of the body.
   final String? contentType;
+
+  /// The content encoding of the body.
+  final String? contentEncoding;
 
   /// Converts a [Map] from parameter names to values to a URL query string.
   ///
@@ -117,4 +151,6 @@ class HttpPayload extends StreamView<List<int>> {
             ].join('='),
           )
           .join('&');
+
+  static final _dataUrlMatcher = RegExp(r'^data:.*,');
 }

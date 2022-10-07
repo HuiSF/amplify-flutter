@@ -12,12 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'package:amplify_core/amplify_core.dart';
+
 import 'base/storage_operation_options.dart';
 
 /// {@template amplify_core.storage.upload_data_request}
 /// Presents a storage upload data request.
 /// {@endtemplate}
-class StorageUploadDataRequest<Options extends StorageOperationOptions> {
+class StorageUploadDataRequest<Options extends StorageOperationOptions,
+    DataPayload extends StorageDataPayload> {
   /// {@macro amplify_core.storage.upload_data_request}
   const StorageUploadDataRequest({
     required this.data,
@@ -28,8 +31,8 @@ class StorageUploadDataRequest<Options extends StorageOperationOptions> {
   /// The key of the object upload to.
   final String key;
 
-  /// The data string to upload.
-  final String data;
+  /// The data payload to upload.
+  final DataPayload data;
 
   /// The configurable options of the [StorageUploadDataRequest].
   final Options? options;

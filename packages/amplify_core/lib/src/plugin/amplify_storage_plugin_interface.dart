@@ -22,23 +22,25 @@ import 'package:meta/meta.dart';
 ///
 /// {@macro amplify_core.amplify_storage_category}
 abstract class StoragePluginInterface<
-    PluginStorageListOperation extends StorageListOperation,
-    PluginStorageListOptions extends StorageListOptions,
-    PluginStorageGetPropertiesOperation extends StorageGetPropertiesOperation,
-    PluginStorageGetPropertiesOptions extends StorageGetPropertiesOptions,
-    PluginStorageGetUrlOperation extends StorageGetUrlOperation,
-    PluginStorageGetUrlOptions extends StorageGetUrlOptions,
-    PluginStorageUploadDataOperation extends StorageUploadDataOperation,
-    PluginStorageUploadDataOptions extends StorageUploadDataOptions,
-    PluginStorageCopyOperation extends StorageCopyOperation,
-    PluginStorageCopyOptions extends StorageCopyOptions,
-    PluginStorageMoveOperation extends StorageMoveOperation,
-    PluginStorageMoveOptions extends StorageMoveOptions,
-    PluginStorageRemoveOperation extends StorageRemoveOperation,
-    PluginStorageRemoveOptions extends StorageRemoveOptions,
-    PluginStorageRemoveManyOperation extends StorageRemoveManyOperation,
-    PluginStorageRemoveManyOptions extends StorageRemoveManyOptions,
-    PluginStorageItem extends StorageItem> extends AmplifyPluginInterface {
+        PluginStorageListOperation extends StorageListOperation,
+        PluginStorageListOptions extends StorageListOptions,
+        PluginStorageGetPropertiesOperation extends StorageGetPropertiesOperation,
+        PluginStorageGetPropertiesOptions extends StorageGetPropertiesOptions,
+        PluginStorageGetUrlOperation extends StorageGetUrlOperation,
+        PluginStorageGetUrlOptions extends StorageGetUrlOptions,
+        PluginStorageUploadDataOperation extends StorageUploadDataOperation,
+        PluginStorageUploadDataOptions extends StorageUploadDataOptions,
+        PluginStorageCopyOperation extends StorageCopyOperation,
+        PluginStorageCopyOptions extends StorageCopyOptions,
+        PluginStorageMoveOperation extends StorageMoveOperation,
+        PluginStorageMoveOptions extends StorageMoveOptions,
+        PluginStorageRemoveOperation extends StorageRemoveOperation,
+        PluginStorageRemoveOptions extends StorageRemoveOptions,
+        PluginStorageRemoveManyOperation extends StorageRemoveManyOperation,
+        PluginStorageRemoveManyOptions extends StorageRemoveManyOptions,
+        PluginStorageItem extends StorageItem,
+        PluginStorageDataPayload extends StorageDataPayload>
+    extends AmplifyPluginInterface {
   @override
   @nonVirtual
   Category get category => Category.storage;
@@ -66,7 +68,9 @@ abstract class StoragePluginInterface<
 
   /// {@macro amplify_core.amplify_storage_category.upload_data}
   PluginStorageUploadDataOperation uploadData({
-    required StorageUploadDataRequest<PluginStorageUploadDataOptions> request,
+    required StorageUploadDataRequest<PluginStorageUploadDataOptions,
+            PluginStorageDataPayload>
+        request,
   }) {
     throw UnimplementedError('uploadData() has not been implemented.');
   }

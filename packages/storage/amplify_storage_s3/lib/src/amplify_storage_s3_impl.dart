@@ -41,6 +41,7 @@ class AmplifyStorageS3 extends AmplifyStorageS3Dart {
       StorageRemoveManyOperation,
       StorageRemoveManyOptions,
       StorageItem,
+      StorageDataPayload,
       AmplifyStorageS3Dart> pluginKey = _AmplifyStorageS3PluginKey();
 }
 
@@ -63,6 +64,7 @@ class _AmplifyStorageS3PluginKey extends StoragePluginKey<
     StorageRemoveManyOperation,
     StorageRemoveManyOptions,
     StorageItem,
+    StorageDataPayload,
     AmplifyStorageS3Dart> {
   const _AmplifyStorageS3PluginKey();
 

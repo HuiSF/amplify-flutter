@@ -16,6 +16,8 @@ export 's3_storage_copy_operation.dart';
 export 's3_storage_copy_options.dart';
 export 's3_storage_copy_result.dart';
 
+export 's3_storage_data_payload.dart';
+
 export 's3_storage_get_properties_operation.dart';
 export 's3_storage_get_properties_options.dart';
 export 's3_storage_get_properties_result.dart';
@@ -42,3 +44,7 @@ export 's3_storage_remove_many_result.dart';
 export 's3_storage_remove_operation.dart';
 export 's3_storage_remove_options.dart';
 export 's3_storage_remove_result.dart';
+
+export 's3_storage_upload_data_operation.dart';
+export 's3_storage_upload_data_options.dart';
+export 's3_storage_upload_data_result.dart';

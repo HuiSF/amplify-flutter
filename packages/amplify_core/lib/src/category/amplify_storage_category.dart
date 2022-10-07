@@ -43,6 +43,7 @@ class StorageCategory<
     PluginStorageRemoveManyOperation extends StorageRemoveManyOperation,
     PluginStorageRemoveManyOptions extends StorageRemoveManyOptions,
     PluginStorageItem extends StorageItem,
+    PluginStorageDataPayload extends StorageDataPayload,
     Plugin extends StoragePluginInterface<
         PluginStorageListOperation,
         PluginStorageListOptions,
@@ -60,7 +61,8 @@ class StorageCategory<
         PluginStorageRemoveOptions,
         PluginStorageRemoveManyOperation,
         PluginStorageRemoveManyOptions,
-        PluginStorageItem>> extends AmplifyCategory<Plugin> {
+        PluginStorageItem,
+        PluginStorageDataPayload>> extends AmplifyCategory<Plugin> {
   StorageCategory([Plugin? plugin]) : _pluginOverride = plugin;
 
   final Plugin? _pluginOverride;
@@ -88,6 +90,7 @@ class StorageCategory<
       GetPluginStorageRemoveManyOperation,
       GetPluginStorageRemoveManyOptions,
       GetPluginStorageItem,
+      GetPluginStorageDataPayload,
       P> getPlugin<
           GetPluginStorageListOperation extends StorageListOperation,
           GetPluginStorageListOptions extends StorageListOptions,
@@ -106,6 +109,7 @@ class StorageCategory<
           GetPluginStorageRemoveManyOperation extends StorageRemoveManyOperation,
           GetPluginStorageRemoveManyOptions extends StorageRemoveManyOptions,
           GetPluginStorageItem extends StorageItem,
+          GetPluginStorageDataPayload extends StorageDataPayload,
           P extends StoragePluginInterface<
               GetPluginStorageListOperation,
               GetPluginStorageListOptions,
@@ -123,7 +127,8 @@ class StorageCategory<
               GetPluginStorageRemoveOptions,
               GetPluginStorageRemoveManyOperation,
               GetPluginStorageRemoveManyOptions,
-              GetPluginStorageItem>>(
+              GetPluginStorageItem,
+              GetPluginStorageDataPayload>>(
     StoragePluginKey<
             GetPluginStorageListOperation,
             GetPluginStorageListOptions,
@@ -142,6 +147,7 @@ class StorageCategory<
             GetPluginStorageRemoveManyOperation,
             GetPluginStorageRemoveManyOptions,
             GetPluginStorageItem,
+            GetPluginStorageDataPayload,
             P>
         pluginKey,
   ) =>
@@ -210,7 +216,7 @@ class StorageCategory<
   /// or a data url.
   /// {@endtemplate}
   PluginStorageUploadDataOperation uploadData({
-    required String data,
+    required PluginStorageDataPayload data,
     required String key,
     PluginStorageUploadDataOptions? options,
   }) {
