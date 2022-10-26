@@ -17,7 +17,7 @@ import 'package:aws_signature_v4/aws_signature_v4.dart' as _i5;
 import 'package:smithy/smithy.dart' as _i1;
 import 'package:smithy_aws/smithy_aws.dart' as _i4;
 
-/// Removes the null version (if there is one) of an object and inserts a delete marker, which becomes the latest version of the object. If there isn't a null version, Amazon S3 does not remove any objects but will still respond that the command was successful.
+/// Removes the null version (if there is one) of an obypassGovernanceRetentionbject and inserts a delete marker, which becomes the latest version of the object. If there isn't a null version, Amazon S3 does not remove any objects but will still respond that the command was successful.
 ///
 /// To remove a specific version, you must be the bucket owner and you must use the version Id subresource. Using this subresource permanently deletes the version. If the object deleted is a delete marker, Amazon S3 sets the response header, `x-amz-delete-marker`, to true.
 ///
@@ -113,8 +113,10 @@ class DeleteObjectOperation extends _i1.HttpOperation<
         if (input.requestPayer != null) {
           b.headers['x-amz-request-payer'] = input.requestPayer!.value;
         }
-        b.headers['x-amz-bypass-governance-retention'] =
-            input.bypassGovernanceRetention.toString();
+        if (input.bypassGovernanceRetention != null) {
+          b.headers['x-amz-bypass-governance-retention'] =
+              input.bypassGovernanceRetention.toString();
+        }
         if (input.expectedBucketOwner != null) {
           if (input.expectedBucketOwner!.isNotEmpty) {
             b.headers['x-amz-expected-bucket-owner'] =

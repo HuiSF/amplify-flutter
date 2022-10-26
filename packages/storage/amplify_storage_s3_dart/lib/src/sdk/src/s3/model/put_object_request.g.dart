@@ -34,7 +34,7 @@ class _$PutObjectRequest extends PutObjectRequest {
   @override
   final String? contentLanguage;
   @override
-  final _i6.Int64 contentLength;
+  final _i6.Int64? contentLength;
   @override
   final String? contentMd5;
   @override
@@ -100,7 +100,7 @@ class _$PutObjectRequest extends PutObjectRequest {
       this.contentDisposition,
       this.contentEncoding,
       this.contentLanguage,
-      required this.contentLength,
+      this.contentLength,
       this.contentMd5,
       this.contentType,
       this.expectedBucketOwner,
@@ -129,8 +129,6 @@ class _$PutObjectRequest extends PutObjectRequest {
         bucket, r'PutObjectRequest', 'bucket');
     BuiltValueNullFieldError.checkNotNull(
         bucketKeyEnabled, r'PutObjectRequest', 'bucketKeyEnabled');
-    BuiltValueNullFieldError.checkNotNull(
-        contentLength, r'PutObjectRequest', 'contentLength');
     BuiltValueNullFieldError.checkNotNull(key, r'PutObjectRequest', 'key');
   }
 
@@ -491,8 +489,7 @@ class PutObjectRequestBuilder
               contentDisposition: contentDisposition,
               contentEncoding: contentEncoding,
               contentLanguage: contentLanguage,
-              contentLength: BuiltValueNullFieldError.checkNotNull(
-                  contentLength, r'PutObjectRequest', 'contentLength'),
+              contentLength: contentLength,
               contentMd5: contentMd5,
               contentType: contentType,
               expectedBucketOwner: expectedBucketOwner,

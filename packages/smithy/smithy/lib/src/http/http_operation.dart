@@ -225,8 +225,16 @@ abstract class HttpOperation<InputPayload, Input, OutputPayload, Output>
         // Recreate the request on each retry to perform signing again, etc.
         final httpRequest = createRequest();
         final operation = httpRequest.send(client);
-        operation.requestProgress.listen(requestProgress.add);
-        operation.responseProgress.listen(responseProgress.add);
+        operation.requestProgress.listen((event) {
+          if (!requestProgress.isClosed) {
+            requestProgress.add(event);
+          }
+        });
+        operation.responseProgress.listen((event) {
+          if (!responseProgress.isClosed) {
+            responseProgress.add(event);
+          }
+        });
         return operation.operation.then(
           (response) => deserializeOutput(
             protocol: protocol,

@@ -191,7 +191,9 @@ class PutObjectOperation extends _i1.HttpOperation<_i2.Stream<List<int>>,
             b.headers['Content-Language'] = input.contentLanguage!;
           }
         }
-        b.headers['Content-Length'] = input.contentLength.toString();
+        if (input.contentLength != null) {
+          b.headers['Content-Length'] = input.contentLength.toString();
+        }
         if (input.contentMd5 != null) {
           if (input.contentMd5!.isNotEmpty) {
             b.headers['Content-MD5'] = input.contentMd5!;

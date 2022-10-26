@@ -142,10 +142,12 @@ class ListObjectsV2Operation extends _i1.PaginatedHttpOperation<
             input.encodingType!.value,
           );
         }
-        b.queryParameters.add(
-          'max-keys',
-          input.maxKeys.toString(),
-        );
+        if (input.maxKeys != null) {
+          b.queryParameters.add(
+            'max-keys',
+            input.maxKeys.toString(),
+          );
+        }
         if (input.prefix != null) {
           b.queryParameters.add(
             'prefix',
@@ -158,10 +160,12 @@ class ListObjectsV2Operation extends _i1.PaginatedHttpOperation<
             input.continuationToken!,
           );
         }
-        b.queryParameters.add(
-          'fetch-owner',
-          input.fetchOwner.toString(),
-        );
+        if (input.fetchOwner != null) {
+          b.queryParameters.add(
+            'fetch-owner',
+            input.fetchOwner.toString(),
+          );
+        }
         if (input.startAfter != null) {
           b.queryParameters.add(
             'start-after',
