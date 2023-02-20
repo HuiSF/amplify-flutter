@@ -1,90 +1,205 @@
-import Flutter
-import UIKit
-import Amplify
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
+import Foundation
 import amplify_flutter_ios
 
+private let pushNotificationMethodChannelName = "com.amazonaws.amplify/push_notification/method"
+
 public class AmplifyPushNotificationsIosPlugin: NSObject, FlutterPlugin {
-    
-    var _result:FlutterResult!
-    let channel:FlutterMethodChannel?;
+    private let methodChannel: FlutterMethodChannel
 
-    public init(channel:FlutterMethodChannel) {
-        self.channel = channel
+    internal var remoteNotificationCompletionHandlers: [String: (UIBackgroundFetchResult) -> Void] = [:]
+    internal var isBackgroundMode = false
+
+    internal let eventsStreamHandler: PushNotificationEventsStreamHandler
+    internal var launchNotification: [AnyHashable: Any]?
+    internal var cachedDeviceToken: String?
+
+    init(
+        eventsStreamHandler: PushNotificationEventsStreamHandler,
+        methodChannel: FlutterMethodChannel
+    ) {
+        self.eventsStreamHandler = eventsStreamHandler
+        self.methodChannel = methodChannel
+
+        super.init()
     }
-    
+
     public static func register(with registrar: FlutterPluginRegistrar) {
-        let _channel = FlutterMethodChannel(name: "com.amazonaws.amplify/push_notifications_plugin", binaryMessenger: registrar.messenger())
-        let instance = AmplifyPushNotificationsIosPlugin(channel: _channel)
-        registrar.addMethodCallDelegate(instance, channel: _channel)
-        registrar.addApplicationDelegate(instance)
-
+        let pluginInstance = AmplifyPushNotificationsIosPlugin(
+            eventsStreamHandler: PushNotificationEventsStreamHandler(),
+            methodChannel: FlutterMethodChannel(
+                name: pushNotificationMethodChannelName,
+                binaryMessenger: registrar.messenger()
+            )
+        )
+        setUpEventChannels(registrar: registrar, pluginInstance: pluginInstance)
+        registrar.addMethodCallDelegate(pluginInstance, channel: pluginInstance.methodChannel)
+        registrar.addApplicationDelegate(pluginInstance)
     }
-    
+
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         let atomicResult = AtomicResult(result, call.method)
-        innerHandle(method: call.method, callArgs: call.arguments as Any?, result: atomicResult)
-        
-    }
-    public func innerHandle(method: String, callArgs: Any?, result: @escaping FlutterResult) {
-        self._result = result
-        let this = AmplifyPushNotificationsIosPlugin.self
-        switch method {
-        case "registerForRemoteNotifications": do {
-            UIApplication.shared.registerForRemoteNotifications()
-            UNUserNotificationCenter.current().delegate = self
-            
-        }
-        case "getToken": do {
-            UIApplication.shared.registerForRemoteNotifications()
-        }
+
+        switch call.method {
+        case "getPermissionStatus":
+            getPermissionStatus { atomicResult($0) }
+        case "requestPermissions":
+            requestPermissions(args: call.arguments) { result in
+                switch result {
+                case .success(let granted):
+                    atomicResult(granted)
+                case .failure(let error):
+                    atomicResult(error)
+                }
+            }
+        case "getLaunchNotification":
+            atomicResult(getLaunchNotification())
+        case "getBadgeCount":
+            atomicResult(getBadgeCount())
+        case "setBadgeCount":
+            setBadgeCount(args: call.arguments) { result in
+                switch result {
+                case .success(_):
+                    atomicResult(true)
+                case .failure(let error):
+                    atomicResult(error)
+                }
+            }
+        case "completeNotification":
+            completeNotification(args: call.arguments) { result in
+                switch result {
+                case .success(_):
+                    atomicResult(true)
+                case .failure(let error):
+                    atomicResult(error)
+                }
+            }
         default:
-            result(FlutterMethodNotImplemented)
+            atomicResult(FlutterMethodNotImplemented)
         }
     }
-    
-    public func application(_ application: UIApplication,
-                            didRegisterForRemoteNotificationsWithDeviceToken
-                            deviceToken: Data) {
-        let deviceTokenString = deviceToken.hexString
-        print("deviceToken : \(deviceTokenString)")
-        
-        if(_result != nil ){
-            _result(deviceTokenString);
+
+    private func requestPermissions(
+        args: Any?,
+        completionHandler: @escaping (PushNotificationOperationResult<Bool>) -> Void
+    ) {
+        guard let permissions = args as? [AnyHashable: Any] else {
+            completionHandler(.failure(invalidArgumentsError))
+            return
         }
-    }
-    
-    public func application(_ application: UIApplication,
-                            didFailToRegisterForRemoteNotificationsWithError
-                            error: Error) {
-        print("error getting token : \(error)")
-    }
-    
-    public func application(
-        _ application: UIApplication,
-        didReceiveRemoteNotification userInfo: [AnyHashable : Any],
-        fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) -> Bool {
-            let remoteMessage:String
-            do {
-                let jsonData = try JSONSerialization.data(withJSONObject: userInfo)
-                remoteMessage = String(data: jsonData, encoding: .utf8) ?? ""
-            } catch {
-                print("something went wrong with parsing json")
-                return false
+
+        var options: UNAuthorizationOptions = []
+
+        if permissions["alert"] as? Bool == true {
+            options.insert(.alert)
+        }
+
+        if permissions["badge"] as? Bool == true {
+            options.insert(.badge)
+        }
+
+        if permissions["sound"] as? Bool == true {
+            options.insert(.sound)
+        }
+
+        if permissions["criticalAlert"] as? Bool == true {
+            options.insert(.criticalAlert)
+        }
+
+        if permissions["provisional"] as? Bool == true {
+            options.insert(.provisional)
+        }
+
+        UNUserNotificationCenter.current().requestAuthorization(options: options) { granted, error in
+            if (error != nil) {
+                completionHandler(.failure(
+                    FlutterError(code: "RequsetPermissionsError",
+                                 message: "Error occurred requesting notitication center authorization.",
+                                 details: error?.localizedDescription)))
+            } else {
+                completionHandler(.success(granted))
             }
-            if UIApplication.shared.applicationState == .active  {
-                self.channel?.invokeMethod("FOREGROUND_MESSAGE_RECEIVED",arguments: remoteMessage);
-            }else{
-                // TODO: Add background notification handling logic
-            }
-            
-            completionHandler(.noData)
-            return true
         }
-    
-}
-extension Data {
-    var hexString: String {
-        let hexString = map { String(format: "%02.2hhx", $0) }.joined()
-        return hexString
+    }
+
+    private func getPermissionStatus(completionHandler: @escaping (String) -> Void) {
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            var status: String
+
+            switch settings.authorizationStatus {
+            case .notDetermined:
+                status = "NotDetermined"
+            case .denied:
+                status = "Denied"
+            case .authorized:
+                status = "Authorized"
+            case .ephemeral:
+                status = "Ephemeral"
+            case .provisional:
+                status = "Provisional"
+            @unknown default:
+                status = "NotDetermined"
+            }
+            completionHandler(status)
+        }
+    }
+
+    private func getLaunchNotification() -> Any? {
+        let launchNotification = self.launchNotification
+        self.launchNotification = nil
+        return launchNotification
+    }
+
+    private func getBadgeCount() -> Int {
+        return UIApplication.shared.applicationIconBadgeNumber
+    }
+
+    private func setBadgeCount(
+        args: Any?,
+        completionHandler: @escaping (PushNotificationOperationResult<Bool>) -> Void
+    ) {
+        guard let count = args as? Int else {
+            completionHandler(.failure(invalidArgumentsError))
+            return
+        }
+
+        UIApplication.shared.applicationIconBadgeNumber = count
+        completionHandler(.success(true))
+    }
+
+    private func completeNotification(
+        args: Any?,
+        completionHandler: @escaping (PushNotificationOperationResult<Bool>) -> Void
+    ) {
+        guard let completionHandlerId = args as? String else {
+            completionHandler(.failure(invalidArgumentsError))
+            return
+        }
+
+        if let completionHanlder = remoteNotificationCompletionHandlers[completionHandlerId] {
+            completionHanlder(.noData)
+            remoteNotificationCompletionHandlers.removeValue(forKey: completionHandlerId)
+        }
+
+        completionHandler(.success(true))
+    }
+
+    private static func setUpEventChannels(
+        registrar: FlutterPluginRegistrar,
+        pluginInstance: AmplifyPushNotificationsIosPlugin
+    ) {
+        eventChannels.forEach { eventChanelName in
+            let eventChannel = FlutterEventChannel(
+                name: eventChanelName, binaryMessenger: registrar.messenger()
+            )
+
+            eventChannel.setStreamHandler(pluginInstance.eventsStreamHandler)
+        }
+    }
+
+    internal func sendEvent(event: AmplifyPushNotificationsEvent) {
+        eventsStreamHandler.sendEvent(event: event)
     }
 }
